@@ -9,6 +9,8 @@ package queue
 // Go's container.list
 
 import "testing"
+import "container/list"
+import "math/rand"
 
 func ensureEmpty(t *testing.T, q *Queue) {
 	if l := q.Len(); l != 0 {
@@ -95,4 +97,71 @@ func TestZeroValue(t *testing.T) {
 	ensureLength(t, &q, 4)
 	q.PushFront(5)
 	ensureLength(t, &q, 5)
+}
+
+func BenchmarkPushFrontQueue(b *testing.B) {
+	var q Queue
+	for i := 0; i < b.N; i++ {
+		q.PushFront(i)
+	}
+}
+func BenchmarkPushFrontList(b *testing.B) {
+	var q list.List
+	for i := 0; i < b.N; i++ {
+		q.PushFront(i)
+	}
+}
+
+func BenchmarkPushBackQueue(b *testing.B) {
+	var q Queue
+	for i := 0; i < b.N; i++ {
+		q.PushBack(i)
+	}
+}
+func BenchmarkPushBackList(b *testing.B) {
+	var q list.List
+	for i := 0; i < b.N; i++ {
+		q.PushBack(i)
+	}
+}
+
+func BenchmarkRandomQueue(b *testing.B) {
+	var q Queue
+	rand.Seed(64738)
+	for i := 0; i < b.N; i++ {
+		if rand.Float32() < 0.8 {
+			q.PushBack(i)
+		}
+		if rand.Float32() < 0.8 {
+			q.PushFront(i)
+		}
+		if rand.Float32() < 0.5 {
+			q.PopFront()
+		}
+		if rand.Float32() < 0.5 {
+			q.PopBack()
+		}
+	}
+}
+func BenchmarkRandomList(b *testing.B) {
+	var q list.List
+	rand.Seed(64738)
+	for i := 0; i < b.N; i++ {
+		if rand.Float32() < 0.8 {
+			q.PushBack(i)
+		}
+		if rand.Float32() < 0.8 {
+			q.PushFront(i)
+		}
+		if rand.Float32() < 0.5 {
+			if e := q.Front(); e != nil {
+				q.Remove(e)
+			}
+		}
+		if rand.Float32() < 0.5 {
+			if e := q.Back(); e != nil {
+				q.Remove(e)
+			}
+		}
+	}
 }
