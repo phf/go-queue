@@ -26,16 +26,15 @@ The benchmarks are not very sophisticated yet but it seems that we
 rather clearly beat container/list on the most common operations.
 
 ```
-$ go test -bench . -benchmem -cover
+$ go test -bench . -benchmem
 PASS
-BenchmarkPushFrontQueue	20000000	       191 ns/op	      53 B/op	       0 allocs/op
-BenchmarkPushFrontList	10000000	       290 ns/op	      49 B/op	       1 allocs/op
-BenchmarkPushBackQueue	10000000	       171 ns/op	      53 B/op	       0 allocs/op
+BenchmarkPushFrontQueue	20000000	       186 ns/op	      53 B/op	       0 allocs/op
+BenchmarkPushFrontList	 5000000	       302 ns/op	      49 B/op	       1 allocs/op
+BenchmarkPushBackQueue	20000000	       167 ns/op	      53 B/op	       0 allocs/op
 BenchmarkPushBackList	 5000000	       305 ns/op	      49 B/op	       1 allocs/op
-BenchmarkRandomQueue	 5000000	       418 ns/op	      26 B/op	       0 allocs/op
-BenchmarkRandomList	 2000000	       799 ns/op	      78 B/op	       1 allocs/op
-coverage: 84.1% of statements
-ok  	github.com/phf/go-queue	17.092s
+BenchmarkRandomQueue	 5000000	       422 ns/op	      26 B/op	       0 allocs/op
+BenchmarkRandomList	 2000000	       797 ns/op	      78 B/op	       1 allocs/op
+ok  	github.com/phf/go-queue	16.806s
 ```
 
 ## What I don't like about Go's conventions

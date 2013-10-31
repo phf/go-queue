@@ -29,13 +29,27 @@ func (q *Queue) Init() *Queue {
 	// start with a slice of length 2 even if that "wastes"
 	// some memory; we do front/back arithmetic modulo the
 	// length, so starting at 1 requires special cases
-	q.rep = make([]interface{}, 2) // TODO: keep old slice/array? but what if it's huge?
+	q.rep = make([]interface{}, 2)
+	// for some time I considered reusing the existing slice
+	// if all a client does is re-initialize the queue; the
+	// big problem with that is that the previous queue might
+	// have been huge while the current queue doesn't grow
+	// much at all; if that were to happen we'd hold on to a
+	// huge chunk of memory for just a few elements and nobody
+	// could do anything about it; so instead I decided to
+	// just allocate a new slice and let the GC take care of
+	// the previous one; seems a better tradeoff all around
 	q.front, q.back, q.length = 0, 0, 0
 	return q
 }
 
-// TODO: good idea? list.go does it but slows down every insertion...
-// I guess that's the price for allowing zero values to be useful?
+// lazyInit lazily initializes a zero Queue value.
+//
+// I am mostly doing this because container/list does the same thing.
+// Personally I think it's a little wasteful because every single
+// PushFront/PushBack is going to pay the overhead of calling this.
+// But that's the price for making zero values useful immediately,
+// something Go apparently likes a lot.
 func (q *Queue) lazyInit() {
 	if q.rep == nil {
 		q.Init()
@@ -47,14 +61,17 @@ func (q *Queue) Len() int {
 	return q.length
 }
 
+// empty returns true if the queue q has no elements.
 func (q *Queue) empty() bool {
 	return q.length == 0
 }
 
+// full returns true if the queue q is at capacity.
 func (q *Queue) full() bool {
 	return q.length == len(q.rep)
 }
 
+// grow doubles the size of queue q's underlying slice/array.
 func (q *Queue) grow() {
 	big := make([]interface{}, q.length*2)
 	j := q.front
@@ -68,12 +85,18 @@ func (q *Queue) grow() {
 }
 
 // TODO: leave this in or not?
+
 func (q *Queue) String() string {
-	result := fmt.Sprintf("(f: %d b: %d l:%d c:%d)", q.front, q.back, q.length, len(q.rep))
+//	result := fmt.Sprintf("(f: %d b: %d l:%d c:%d)", q.front, q.back, q.length, len(q.rep))
+	result := ""
 	result = result + "["
 	j := q.front
 	for i := 0; i < q.length; i++ {
-		result = result + fmt.Sprintf("[%v]", q.rep[j])
+		if i == q.length-1 {
+			result = result + fmt.Sprintf("%v", q.rep[j])
+		} else {
+			result = result + fmt.Sprintf("%v, ", q.rep[j])
+		}
 		q.inc(&j)
 	}
 	result = result + "]"
@@ -91,10 +114,6 @@ func (q *Queue) dec(i *int) {
 	l := len(q.rep)
 	*i = (*i-1+l) % l
 }
-
-// TODO: I dislike the Go philosophy of avoiding panics at all
-// costs; Front/Back/Pop from an empty Queue SHOULD panic! at
-// least in my mind...
 
 // Front returns the first element of queue q or nil. 
 func (q *Queue) Front() interface{} {

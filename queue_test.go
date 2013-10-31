@@ -22,6 +22,12 @@ func ensureEmpty(t *testing.T, q *Queue) {
 	if e := q.Back(); e != nil {
 		t.Errorf("q.Back() = %v, want %v", e, nil)
 	}
+	if e := q.PopFront(); e != nil {
+		t.Errorf("q.PopFront() = %v, want %v", e, nil)
+	}
+	if e := q.PopBack(); e != nil {
+		t.Errorf("q.PopBack() = %v, want %v", e, nil)
+	}
 }
 
 func TestNew(t *testing.T) {
@@ -97,6 +103,18 @@ func TestZeroValue(t *testing.T) {
 	ensureLength(t, &q, 4)
 	q.PushFront(5)
 	ensureLength(t, &q, 5)
+	q.PushBack(6)
+	ensureLength(t, &q, 6)
+	q.PushBack(7)
+	ensureLength(t, &q, 7)
+	q.PushBack(8)
+	ensureLength(t, &q, 8)
+	q.PushBack(9)
+	ensureLength(t, &q, 9)
+	const want = "[5, 4, 3, 2, 1, 6, 7, 8, 9]"
+	if s := q.String(); s != want {
+		t.Errorf("q.String() = %s, want %s", s, want)
+	}
 }
 
 func BenchmarkPushFrontQueue(b *testing.B) {
