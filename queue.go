@@ -79,7 +79,7 @@ func (q *Queue) grow() {
 	j := q.front
 	for i := 0; i < q.length; i++ {
 		big[i] = q.rep[j]
-		q.inc(&j)
+		j = q.inc(j)
 	}
 	q.rep = big
 	q.front = 0
@@ -99,22 +99,22 @@ func (q *Queue) String() string {
 		} else {
 			result = result + fmt.Sprintf("%v, ", q.rep[j])
 		}
-		q.inc(&j)
+		j = q.inc(j)
 	}
 	result = result + "]"
 	return result
 }
 
-// TODO: convert these two back to proper functions? see ugliness in Back() below
-
-func (q *Queue) inc(i *int) {
+// inc returns the next integer position wrapping around queue q.
+func (q *Queue) inc(i int) int {
 	l := len(q.rep)
-	*i = (*i + 1 + l) % l
+	return (i + 1 + l) % l
 }
 
-func (q *Queue) dec(i *int) {
+// dec returns the previous integer position wrapping around queue q.
+func (q *Queue) dec(i int) int {
 	l := len(q.rep)
-	*i = (*i - 1 + l) % l
+	return (i - 1 + l) % l
 }
 
 // Front returns the first element of queue q or nil.
@@ -130,9 +130,7 @@ func (q *Queue) Back() interface{} {
 	if q.empty() {
 		return nil
 	}
-	b := q.back
-	q.dec(&b)
-	return q.rep[b]
+	return q.rep[q.dec(q.back)]
 }
 
 // PushFront inserts a new value v at the front of queue q.
@@ -141,7 +139,7 @@ func (q *Queue) PushFront(v interface{}) {
 	if q.full() {
 		q.grow()
 	}
-	q.dec(&q.front)
+	q.front = q.dec(q.front)
 	q.rep[q.front] = v
 	q.length++
 }
@@ -153,7 +151,7 @@ func (q *Queue) PushBack(v interface{}) {
 		q.grow()
 	}
 	q.rep[q.back] = v
-	q.inc(&q.back)
+	q.back = q.inc(q.back)
 	q.length++
 }
 
@@ -164,7 +162,7 @@ func (q *Queue) PopFront() interface{} {
 	}
 	v := q.rep[q.front]
 	q.rep[q.front] = nil // nice to GC?
-	q.inc(&q.front)
+	q.front = q.inc(q.front)
 	q.length--
 	return v
 }
@@ -174,7 +172,7 @@ func (q *Queue) PopBack() interface{} {
 	if q.empty() {
 		return nil
 	}
-	q.dec(&q.back)
+	q.back = q.dec(q.back)
 	v := q.rep[q.back]
 	q.rep[q.back] = nil // nice to GC?
 	q.length--
