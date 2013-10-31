@@ -15,8 +15,10 @@ type Queue struct {
 	// PushBack writes to rep[back] and then increments
 	// back; PushFront decrements front and then writes
 	// to rep[front]; gotta love those invariants.
-	rep []interface{}
-	front, back, length int
+	rep    []interface{}
+	front  int
+	back   int
+	length int
 }
 
 // New returns an initialized empty queue.
@@ -87,7 +89,7 @@ func (q *Queue) grow() {
 // TODO: leave this in or not?
 
 func (q *Queue) String() string {
-//	result := fmt.Sprintf("(f: %d b: %d l:%d c:%d)", q.front, q.back, q.length, len(q.rep))
+	//	result := fmt.Sprintf("(f: %d b: %d l:%d c:%d)", q.front, q.back, q.length, len(q.rep))
 	result := ""
 	result = result + "["
 	j := q.front
@@ -107,23 +109,27 @@ func (q *Queue) String() string {
 
 func (q *Queue) inc(i *int) {
 	l := len(q.rep)
-	*i = (*i+1+l) % l
+	*i = (*i + 1 + l) % l
 }
 
 func (q *Queue) dec(i *int) {
 	l := len(q.rep)
-	*i = (*i-1+l) % l
+	*i = (*i - 1 + l) % l
 }
 
-// Front returns the first element of queue q or nil. 
+// Front returns the first element of queue q or nil.
 func (q *Queue) Front() interface{} {
-	if q.empty() { return nil }
+	if q.empty() {
+		return nil
+	}
 	return q.rep[q.front]
 }
 
-// Back returns the last element of queue q or nil. 
+// Back returns the last element of queue q or nil.
 func (q *Queue) Back() interface{} {
-	if q.empty() { return nil }
+	if q.empty() {
+		return nil
+	}
 	b := q.back
 	q.dec(&b)
 	return q.rep[b]
@@ -132,7 +138,9 @@ func (q *Queue) Back() interface{} {
 // PushFront inserts a new value v at the front of queue q.
 func (q *Queue) PushFront(v interface{}) {
 	q.lazyInit() // TODO: keep?
-	if q.full() { q.grow() }
+	if q.full() {
+		q.grow()
+	}
 	q.dec(&q.front)
 	q.rep[q.front] = v
 	q.length++
@@ -141,7 +149,9 @@ func (q *Queue) PushFront(v interface{}) {
 // PushBack inserts a new value v at the back of queue q.
 func (q *Queue) PushBack(v interface{}) {
 	q.lazyInit() // TODO: keep?
-	if q.full() { q.grow() }
+	if q.full() {
+		q.grow()
+	}
 	q.rep[q.back] = v
 	q.inc(&q.back)
 	q.length++
@@ -149,7 +159,9 @@ func (q *Queue) PushBack(v interface{}) {
 
 // PopFront removes and returns the first element of queue q or nil.
 func (q *Queue) PopFront() interface{} {
-	if q.empty() { return nil }
+	if q.empty() {
+		return nil
+	}
 	v := q.rep[q.front]
 	q.rep[q.front] = nil // nice to GC?
 	q.inc(&q.front)
@@ -159,7 +171,9 @@ func (q *Queue) PopFront() interface{} {
 
 // PopBack removes and returns the last element of queue q or nil.
 func (q *Queue) PopBack() interface{} {
-	if q.empty() { return nil }
+	if q.empty() {
+		return nil
+	}
 	q.dec(&q.back)
 	v := q.rep[q.back]
 	q.rep[q.back] = nil // nice to GC?
