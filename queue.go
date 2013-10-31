@@ -5,6 +5,10 @@
 // Package queue implements a double-ended queue abstraction on
 // top of a slice/array. All operations are constant time except
 // for PushFront and PushBack which are amortized constant time.
+//
+// We are about 60%-90% faster than container/list would be at
+// the price of potentially wasting some memory because we grow
+// our slice by amortized doubling.
 package queue
 
 import "fmt"
@@ -30,7 +34,7 @@ func New() *Queue {
 func (q *Queue) Init() *Queue {
 	// start with a slice of length 2 even if that "wastes"
 	// some memory; we do front/back arithmetic modulo the
-	// length, so starting at 1 requires special cases
+	// length, so starting at 1 would require special cases
 	q.rep = make([]interface{}, 2)
 	// for some time I considered reusing the existing slice
 	// if all a client does is re-initialize the queue; the
@@ -86,10 +90,16 @@ func (q *Queue) grow() {
 	q.back = q.length
 }
 
-// TODO: leave this in or not?
+// lazyGrow grows the underlying slice/array if necessary.
+func (q *Queue) lazyGrow() {
+	if q.full() {
+		q.grow()
+	}
+}
 
+// String returns a string representation of queue q formatted
+// from front to back.
 func (q *Queue) String() string {
-	//	result := fmt.Sprintf("(f: %d b: %d l:%d c:%d)", q.front, q.back, q.length, len(q.rep))
 	result := ""
 	result = result + "["
 	j := q.front
@@ -135,10 +145,8 @@ func (q *Queue) Back() interface{} {
 
 // PushFront inserts a new value v at the front of queue q.
 func (q *Queue) PushFront(v interface{}) {
-	q.lazyInit() // TODO: keep?
-	if q.full() {
-		q.grow()
-	}
+	q.lazyInit()
+	q.lazyGrow()
 	q.front = q.dec(q.front)
 	q.rep[q.front] = v
 	q.length++
@@ -146,14 +154,15 @@ func (q *Queue) PushFront(v interface{}) {
 
 // PushBack inserts a new value v at the back of queue q.
 func (q *Queue) PushBack(v interface{}) {
-	q.lazyInit() // TODO: keep?
-	if q.full() {
-		q.grow()
-	}
+	q.lazyInit()
+	q.lazyGrow()
 	q.rep[q.back] = v
 	q.back = q.inc(q.back)
 	q.length++
 }
+
+// Both PopFront and PopBack set the newly free slot to nil
+// in an attempt to be nice to the garbage collector.
 
 // PopFront removes and returns the first element of queue q or nil.
 func (q *Queue) PopFront() interface{} {
@@ -161,7 +170,7 @@ func (q *Queue) PopFront() interface{} {
 		return nil
 	}
 	v := q.rep[q.front]
-	q.rep[q.front] = nil // nice to GC?
+	q.rep[q.front] = nil
 	q.front = q.inc(q.front)
 	q.length--
 	return v
@@ -174,7 +183,7 @@ func (q *Queue) PopBack() interface{} {
 	}
 	q.back = q.dec(q.back)
 	v := q.rep[q.back]
-	q.rep[q.back] = nil // nice to GC?
+	q.rep[q.back] = nil
 	q.length--
 	return v
 }
