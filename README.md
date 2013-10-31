@@ -20,7 +20,7 @@ insertion.
 I am trying to stick close to the conventions container/list seems
 to follow even though I disagree with several of them.
 
-## Latest Performance Comparison
+## Performance comparison
 
 The benchmarks are not very sophisticated yet but it seems that we
 rather clearly beat container/list on the most common operations.
