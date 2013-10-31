@@ -1,5 +1,9 @@
 # Queue data structure for Go
 
+See http://godoc.org/github.com/phf/go-queue for the documentation.
+
+## Background
+
 I was hacking a breadth-first search in Go and needed a queue but
 all I could find in the standard library was container/list.
 
