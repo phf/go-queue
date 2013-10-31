@@ -28,14 +28,24 @@ rather clearly beat container/list on the most common operations.
 ```
 $ go test -bench . -benchmem
 PASS
-BenchmarkPushFrontQueue	20000000	       186 ns/op	      53 B/op	       0 allocs/op
-BenchmarkPushFrontList	 5000000	       302 ns/op	      49 B/op	       1 allocs/op
-BenchmarkPushBackQueue	20000000	       167 ns/op	      53 B/op	       0 allocs/op
-BenchmarkPushBackList	 5000000	       305 ns/op	      49 B/op	       1 allocs/op
-BenchmarkRandomQueue	 5000000	       422 ns/op	      26 B/op	       0 allocs/op
-BenchmarkRandomList	 2000000	       797 ns/op	      78 B/op	       1 allocs/op
-ok  	github.com/phf/go-queue	16.806s
+BenchmarkPushFrontQueue	20000000	       190 ns/op	      53 B/op	       0 allocs/op
+BenchmarkPushFrontList	10000000	       304 ns/op	      49 B/op	       1 allocs/op
+BenchmarkPushBackQueue	10000000	       170 ns/op	      53 B/op	       0 allocs/op
+BenchmarkPushBackList	 5000000	       309 ns/op	      49 B/op	       1 allocs/op
+BenchmarkPushBackChannel	50000000	        56.4 ns/op	      16 B/op	       0 allocs/op
+BenchmarkRandomQueue	 5000000	       417 ns/op	      26 B/op	       0 allocs/op
+BenchmarkRandomList	 2000000	       843 ns/op	      78 B/op	       1 allocs/op
+ok  	github.com/phf/go-queue	20.241s
 ```
+
+Go's channels beat everything else, but they are also more limited
+than both container/list or this queue class:
+You have to size them correctly if you want to use them as a simple
+queue in an otherwise non-concurrent setting, they are not
+double-ended, and they don't support just "peeking" at the next
+element without removing it.
+Still, in certain settings you may want to use a channel as a very
+specialized queue just because it's ridiculously fast.
 
 ## What I don't like about Go's conventions
 

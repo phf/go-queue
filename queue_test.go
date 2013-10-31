@@ -142,6 +142,13 @@ func BenchmarkPushBackList(b *testing.B) {
 		q.PushBack(i)
 	}
 }
+func BenchmarkPushBackChannel(b *testing.B) {
+	q := make(chan interface{}, b.N)
+	for i := 0; i < b.N; i++ {
+		q <- i
+	}
+	close(q)
+}
 
 func BenchmarkRandomQueue(b *testing.B) {
 	var q Queue
