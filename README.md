@@ -1,6 +1,6 @@
 # Queue data structure for Go
 
-See http://godoc.org/github.com/phf/go-queue for the documentation.
+See http://godoc.org/github.com/phf/go-queue/queue for the documentation.
 
 ## Background
 
