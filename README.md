@@ -1,7 +1,7 @@
 # Queue data structure for Go
 
 [![GoDoc](https://godoc.org/github.com/phf/go-queue/queue?status.png)](http://godoc.org/github.com/phf/go-queue/queue)
-[![GoCI](http://goci.me/project/image/github.com/phf/go-queue/queue)](http://goci.me/project/github.com/phf/go-queue/queue)
+[![GoCI](http://goci.me/project/image/github.com/phf/go-queue/queue)](http://goci.me/project/github.com/phf/go-queue)
 
 ## Background
 
