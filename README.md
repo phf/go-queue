@@ -28,30 +28,42 @@ to follow even though I disagree with several of them (see below).
 
 ## Performance comparison
 
-The benchmarks are not very sophisticated yet but it seems that we
-at least beat container/list on the most common operations.
+The benchmarks are not very sophisticated yet but we seem to beat
+container/list by 15%-45% or so.
+We now even beat Go's channels by about 5%, but I am still a bit
+suspicious of that.
+Anyway, here are the numbers:
 
 ```
 $ go test -bench . -benchmem
-BenchmarkPushFrontQueue-2    	   10000	    138415 ns/op	   40736 B/op	    1010 allocs/op
-BenchmarkPushFrontList-2     	   10000	    155525 ns/op	   56048 B/op	    2001 allocs/op
-BenchmarkPushBackQueue-2     	   10000	    138871 ns/op	   40736 B/op	    1010 allocs/op
-BenchmarkPushBackList-2      	   10000	    156068 ns/op	   56048 B/op	    2001 allocs/op
-BenchmarkPushBackChannel-2   	   10000	    113466 ns/op	   24480 B/op	    1002 allocs/op
-BenchmarkRandomQueue-2       	    3000	    466054 ns/op	   45526 B/op	    1610 allocs/op
-BenchmarkRandomList-2        	    3000	    524458 ns/op	   89659 B/op	    3201 allocs/op
+BenchmarkPushFrontQueue-2    	   10000	    109021 ns/op	   40736 B/op	    1010 allocs/op
+BenchmarkPushFrontList-2     	   10000	    154218 ns/op	   56048 B/op	    2001 allocs/op
+BenchmarkPushBackQueue-2     	   10000	    107951 ns/op	   40736 B/op	    1010 allocs/op
+BenchmarkPushBackList-2      	   10000	    158219 ns/op	   56048 B/op	    2001 allocs/op
+BenchmarkPushBackChannel-2   	   10000	    113839 ns/op	   24480 B/op	    1002 allocs/op
+BenchmarkRandomQueue-2       	    2000	    600828 ns/op	   45530 B/op	    1610 allocs/op
+BenchmarkRandomList-2        	    2000	    692993 ns/op	   89667 B/op	    3201 allocs/op
 PASS
-ok  	github.com/phf/go-queue/queue	10.189s
+ok  	github.com/phf/go-queue/queue	9.241s
 ```
 
-Go's channels beat everything else, but they are also more limited
-than both container/list or this queue class:
-You have to size them correctly if you want to use them as a simple
+### Go's channels as queues
+
+Go's channels *used* to beat our queue implementation by about 22%
+for `PushBack`.
+(In fact I used to call them "*ridiculously* fast" before and
+recommended their use in situations where nothing but performance
+matters.)
+That seemed sensible considering that channels are built into the
+language and offer a lot less functionality:
+We have to size them correctly if we want to use them as a simple
 queue in an otherwise non-concurrent setting, they are not
-double-ended, and they don't support just "peeking" at the next
-element without removing it.
-Still, in certain settings you may want to use a channel as a very
-specialized queue just because it's *ridiculously* fast.
+double-ended, and they don't support "peeking" at the next element
+without removing it.
+Apparently replacing the "manual" loop when a queue has to grow with
+[copy](https://golang.org/ref/spec#Appending_and_copying_slices) has
+paid off.
+(That or I am benchmarking this incorrectly.)
 
 ## What I don't like about Go's conventions
 
@@ -89,3 +101,10 @@ I would much prefer to panic in your face when you try to remove or
 even just access something from an empty queue.
 But since their stuff doesn't panic in similar circumstances, this
 queue implementation doesn't either.
+
+## Kudos
+
+- [Rodrigo Moraes](https://github.com/moraes) for posting
+  [this gist](https://gist.github.com/moraes/2141121) which reminded
+  me of Go's [copy](https://golang.org/ref/spec#Appending_and_copying_slices)
+  builtin and a similar trick I had previously used in Java.
