@@ -117,75 +117,91 @@ func TestZeroValue(t *testing.T) {
 	}
 }
 
+const size = 1000
+
 func BenchmarkPushFrontQueue(b *testing.B) {
-	var q Queue
 	for i := 0; i < b.N; i++ {
-		q.PushFront(i)
+		var q Queue
+		for n := 0; n < size; n++ {
+			q.PushFront(n)
+		}
 	}
 }
 func BenchmarkPushFrontList(b *testing.B) {
-	var q list.List
 	for i := 0; i < b.N; i++ {
-		q.PushFront(i)
+		var q list.List
+		for n := 0; n < size; n++ {
+			q.PushFront(n)
+		}
 	}
 }
 
 func BenchmarkPushBackQueue(b *testing.B) {
-	var q Queue
 	for i := 0; i < b.N; i++ {
-		q.PushBack(i)
+		var q Queue
+		for n := 0; n < size; n++ {
+			q.PushBack(n)
+		}
 	}
 }
 func BenchmarkPushBackList(b *testing.B) {
-	var q list.List
 	for i := 0; i < b.N; i++ {
-		q.PushBack(i)
+		var q list.List
+		for n := 0; n < size; n++ {
+			q.PushBack(n)
+		}
 	}
 }
 func BenchmarkPushBackChannel(b *testing.B) {
-	q := make(chan interface{}, b.N)
 	for i := 0; i < b.N; i++ {
-		q <- i
+		q := make(chan interface{}, size)
+		for n := 0; n < size; n++ {
+			q <- n
+		}
+		close(q)
 	}
-	close(q)
 }
 
 func BenchmarkRandomQueue(b *testing.B) {
-	var q Queue
 	rand.Seed(64738)
 	for i := 0; i < b.N; i++ {
-		if rand.Float32() < 0.8 {
-			q.PushBack(i)
-		}
-		if rand.Float32() < 0.8 {
-			q.PushFront(i)
-		}
-		if rand.Float32() < 0.5 {
-			q.PopFront()
-		}
-		if rand.Float32() < 0.5 {
-			q.PopBack()
+		var q Queue
+		for n := 0; n < size; n++ {
+			if rand.Float32() < 0.8 {
+				q.PushBack(n)
+			}
+			if rand.Float32() < 0.8 {
+				q.PushFront(n)
+			}
+			if rand.Float32() < 0.5 {
+				q.PopFront()
+			}
+			if rand.Float32() < 0.5 {
+				q.PopBack()
+			}
 		}
 	}
 }
 func BenchmarkRandomList(b *testing.B) {
-	var q list.List
 	rand.Seed(64738)
 	for i := 0; i < b.N; i++ {
-		if rand.Float32() < 0.8 {
-			q.PushBack(i)
-		}
-		if rand.Float32() < 0.8 {
-			q.PushFront(i)
-		}
-		if rand.Float32() < 0.5 {
-			if e := q.Front(); e != nil {
-				q.Remove(e)
+		var q list.List
+		for n := 0; n < size; n++ {
+			if rand.Float32() < 0.8 {
+				q.PushBack(n)
 			}
-		}
-		if rand.Float32() < 0.5 {
-			if e := q.Back(); e != nil {
-				q.Remove(e)
+			if rand.Float32() < 0.8 {
+				q.PushFront(n)
+			}
+			if rand.Float32() < 0.5 {
+				if e := q.Front(); e != nil {
+					q.Remove(e)
+				}
+			}
+			if rand.Float32() < 0.5 {
+				if e := q.Back(); e != nil {
+					q.Remove(e)
+				}
 			}
 		}
 	}

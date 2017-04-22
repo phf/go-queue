@@ -1,12 +1,13 @@
 # Queue data structure for Go
 
 [![GoDoc](https://godoc.org/github.com/phf/go-queue/queue?status.png)](http://godoc.org/github.com/phf/go-queue/queue)
-[![GoCI](http://goci.me/project/image/github.com/phf/go-queue/queue)](http://goci.me/project/github.com/phf/go-queue)
+[![Go Report Card](https://goreportcard.com/badge/github.com/phf/go-queue)](https://goreportcard.com/report/github.com/phf/go-queue)
 
 ## Background
 
 I was hacking a breadth-first search in Go and needed a queue but
-all I could find in the standard library was container/list.
+all I could find in the standard library was
+[container/list](https://golang.org/pkg/container/list/).
 
 Now in principle there's nothing wrong with container/list, but I
 had just admonished my students to always carefully think about
@@ -23,24 +24,24 @@ A queue abstraction that doesn't allocate memory on every single
 insertion.
 
 I am trying to stick close to the conventions container/list seems
-to follow even though I disagree with several of them.
+to follow even though I disagree with several of them (see below).
 
 ## Performance comparison
 
 The benchmarks are not very sophisticated yet but it seems that we
-rather clearly beat container/list on the most common operations.
+at least beat container/list on the most common operations.
 
 ```
 $ go test -bench . -benchmem
+BenchmarkPushFrontQueue-2    	   10000	    138415 ns/op	   40736 B/op	    1010 allocs/op
+BenchmarkPushFrontList-2     	   10000	    155525 ns/op	   56048 B/op	    2001 allocs/op
+BenchmarkPushBackQueue-2     	   10000	    138871 ns/op	   40736 B/op	    1010 allocs/op
+BenchmarkPushBackList-2      	   10000	    156068 ns/op	   56048 B/op	    2001 allocs/op
+BenchmarkPushBackChannel-2   	   10000	    113466 ns/op	   24480 B/op	    1002 allocs/op
+BenchmarkRandomQueue-2       	    3000	    466054 ns/op	   45526 B/op	    1610 allocs/op
+BenchmarkRandomList-2        	    3000	    524458 ns/op	   89659 B/op	    3201 allocs/op
 PASS
-BenchmarkPushFrontQueue	20000000	       190 ns/op	      53 B/op	       0 allocs/op
-BenchmarkPushFrontList	10000000	       304 ns/op	      49 B/op	       1 allocs/op
-BenchmarkPushBackQueue	10000000	       170 ns/op	      53 B/op	       0 allocs/op
-BenchmarkPushBackList	 5000000	       309 ns/op	      49 B/op	       1 allocs/op
-BenchmarkPushBackChannel	50000000	        56.4 ns/op	      16 B/op	       0 allocs/op
-BenchmarkRandomQueue	 5000000	       417 ns/op	      26 B/op	       0 allocs/op
-BenchmarkRandomList	 2000000	       843 ns/op	      78 B/op	       1 allocs/op
-ok  	github.com/phf/go-queue	20.241s
+ok  	github.com/phf/go-queue/queue	10.189s
 ```
 
 Go's channels beat everything else, but they are also more limited
@@ -50,7 +51,7 @@ queue in an otherwise non-concurrent setting, they are not
 double-ended, and they don't support just "peeking" at the next
 element without removing it.
 Still, in certain settings you may want to use a channel as a very
-specialized queue just because it's ridiculously fast.
+specialized queue just because it's *ridiculously* fast.
 
 ## What I don't like about Go's conventions
 
@@ -81,14 +82,10 @@ Indeed you'll probably end up looking for the bug in all the wrong
 places before it finally dawns on you that maybe you removed from
 the wrong list.
 
-In any case, presumably the Go guys know better what they want their
+In any case, presumably the Go folks know better what they want their
 libraries to look like than I do, so for this queue module I simply
 followed their conventions.
 I would much prefer to panic in your face when you try to remove or
 even just access something from an empty queue.
 But since their stuff doesn't panic in similar circumstances, this
 queue implementation doesn't either.
-It just silently ignores the problem and hands you a nil value instead.
-Now of course you have to keep checking that return value all the time
-instead of being able to rely on a runtime check.
-Oh well.
