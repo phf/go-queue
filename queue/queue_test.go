@@ -158,43 +158,53 @@ func BenchmarkPushBackChannel(b *testing.B) {
 	}
 }
 
-func BenchmarkRandomQueue(b *testing.B) {
+var rands []float32
+func makeRands() {
+	if rands != nil {
+		return
+	}
 	rand.Seed(64738)
+	for i := 0; i < 4*size; i++ {
+		rands = append(rands, rand.Float32())
+	}
+}
+func BenchmarkRandomQueue(b *testing.B) {
+	makeRands()
 	for i := 0; i < b.N; i++ {
 		var q Queue
 		for n := 0; n < size; n++ {
-			if rand.Float32() < 0.8 {
+			if rands[n*4] < 0.8 {
 				q.PushBack(n)
 			}
-			if rand.Float32() < 0.8 {
+			if rands[n*4+1] < 0.8 {
 				q.PushFront(n)
 			}
-			if rand.Float32() < 0.5 {
+			if rands[n*4+2] < 0.5 {
 				q.PopFront()
 			}
-			if rand.Float32() < 0.5 {
+			if rands[n*4+3] < 0.5 {
 				q.PopBack()
 			}
 		}
 	}
 }
 func BenchmarkRandomList(b *testing.B) {
-	rand.Seed(64738)
+	makeRands()
 	for i := 0; i < b.N; i++ {
 		var q list.List
 		for n := 0; n < size; n++ {
-			if rand.Float32() < 0.8 {
+			if rands[n*4] < 0.8 {
 				q.PushBack(n)
 			}
-			if rand.Float32() < 0.8 {
+			if rands[n*4+1] < 0.8 {
 				q.PushFront(n)
 			}
-			if rand.Float32() < 0.5 {
+			if rands[n*4+2] < 0.5 {
 				if e := q.Front(); e != nil {
 					q.Remove(e)
 				}
 			}
-			if rand.Float32() < 0.5 {
+			if rands[n*4+3] < 0.5 {
 				if e := q.Back(); e != nil {
 					q.Remove(e)
 				}
