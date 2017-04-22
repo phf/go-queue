@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Peter H. Froehlich. All rights reserved.
+// Copyright (c) 2013-2017, Peter H. Froehlich. All rights reserved.
 // Use of this source code is governed by a BSD-style license
 // that can be found in the LICENSE file.
 
@@ -6,9 +6,9 @@
 // top of a slice/array. All operations are constant time except
 // for PushFront and PushBack which are amortized constant time.
 //
-// We are about 60%-90% faster than container/list would be at
-// the price of potentially wasting some memory because we grow
-// our slice by amortized doubling.
+// We are about 15%-45% faster than container/list at the price
+// of potentially wasting some memory because we grow by doubling.
+// We seem to even beat Go's channels by a small margin.
 package queue
 
 import "fmt"
@@ -55,7 +55,7 @@ func (q *Queue) Init() *Queue {
 // Personally I think it's a little wasteful because every single
 // PushFront/PushBack is going to pay the overhead of calling this.
 // But that's the price for making zero values useful immediately,
-// something Go apparently likes a lot.
+// something Go folks apparently like a lot.
 func (q *Queue) lazyInit() {
 	if q.rep == nil {
 		q.Init()
@@ -79,13 +79,17 @@ func (q *Queue) full() bool {
 
 // grow doubles the size of queue q's underlying slice/array.
 func (q *Queue) grow() {
-	big := make([]interface{}, q.length*2)
-	j := q.front
-	for i := 0; i < q.length; i++ {
-		big[i] = q.rep[j]
-		j = q.inc(j)
-	}
-	q.rep = big
+	bigger := make([]interface{}, q.length*2)
+	// Kudos to Rodrigo Moraes, see https://gist.github.com/moraes/2141121
+	copy(bigger, q.rep[q.front:])
+	copy(bigger[q.length-q.front:], q.rep[:q.front])
+	// The above replaced the "obvious" for loop and is a bit tricky.
+	// First note that q.front == q.back if we're full; if that wasn't
+	// true, things would be more complicated. Second recall that for
+	// a slice [lo:hi] the lo bound is inclusive whereas the hi bound
+	// is exclusive. If that doesn't convince you that the above works
+	// maybe drawing out some pictures for a concrete example will?
+	q.rep = bigger
 	q.front = 0
 	q.back = q.length
 }
