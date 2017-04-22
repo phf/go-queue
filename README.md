@@ -63,6 +63,38 @@ $ date
 Sat Apr 22 11:26:40 EDT 2017
 ```
 
+(The number of allocations seems off, since we grow by doubling we should
+only allocate memory O(log n) times.)
+
+The same benchmarks on an old
+[Raspberry Pi Model B Rev 1](https://en.wikipedia.org/wiki/Raspberry_Pi):
+
+```
+$ go test -bench . -benchmem
+PASS
+BenchmarkPushFrontQueue     2000            788316 ns/op           16469 B/op         12 allocs/op
+BenchmarkPushFrontList      1000           2629835 ns/op           33904 B/op       1028 allocs/op
+BenchmarkPushBackQueue      2000            776663 ns/op           16469 B/op         12 allocs/op
+BenchmarkPushBackList       1000           2817162 ns/op           33877 B/op       1028 allocs/op
+BenchmarkPushBackChannel    2000           1229474 ns/op            8454 B/op          1 allocs/op
+BenchmarkRandomQueue        2000           1325947 ns/op           16469 B/op         12 allocs/op
+BenchmarkRandomList          500           4929491 ns/op           53437 B/op       1627 allocs/op
+ok      github.com/phf/go-queue/queue   17.798s
+$ go version
+go version go1.3.3 linux/arm
+$ cat /proc/cpuinfo | grep model
+model name      : ARMv6-compatible processor rev 7 (v6l)
+$ date
+Sat Apr 22 18:04:16 UTC 2017
+```
+
+Here we're over three times faster than
+[container/list](https://golang.org/pkg/container/list/)
+and almost 60% faster than Go's channels.
+(Also the number of allocations seems to be correct. And in terms of
+raw performance, Go's memory allocator seems to have improved quite
+a bit in later versions.)
+
 ### Go's channels as queues
 
 Go's channels *used* to beat our queue implementation by about 22%

@@ -159,6 +159,7 @@ func BenchmarkPushBackChannel(b *testing.B) {
 }
 
 var rands []float32
+
 func makeRands() {
 	if rands != nil {
 		return
