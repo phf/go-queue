@@ -6,9 +6,9 @@
 // top of a slice/array. All operations are constant time except
 // for PushFront and PushBack which are amortized constant time.
 //
-// We are about 15%-45% faster than container/list at the price
-// of potentially wasting some memory because we grow by doubling.
-// We seem to even beat Go's channels by a small margin.
+// We are almost twice as fast as container/list at the price of
+// potentially wasting some memory because we grow by doubling.
+// We are also faster than Go's channels by a smaller margin.
 package queue
 
 import "fmt"
@@ -18,7 +18,8 @@ import "fmt"
 type Queue struct {
 	// PushBack writes to rep[back] and then increments
 	// back; PushFront decrements front and then writes
-	// to rep[front]; gotta love those invariants.
+	// to rep[front]; len(rep) must be a power of two;
+	// gotta love those invariants.
 	rep    []interface{}
 	front  int
 	back   int
@@ -32,19 +33,13 @@ func New() *Queue {
 
 // Init initializes or clears queue q.
 func (q *Queue) Init() *Queue {
-	// start with a slice of length 2 even if that "wastes"
-	// some memory; we do front/back arithmetic modulo the
-	// length, so starting at 1 would require special cases
-	q.rep = make([]interface{}, 2)
-	// for some time I considered reusing the existing slice
-	// if all a client does is re-initialize the queue; the
-	// big problem with that is that the previous queue might
-	// have been huge while the current queue doesn't grow
-	// much at all; if that were to happen we'd hold on to a
-	// huge chunk of memory for just a few elements and nobody
-	// could do anything about it; so instead I decided to
-	// just allocate a new slice and let the GC take care of
-	// the previous one; seems a better tradeoff all around
+	q.rep = make([]interface{}, 1)
+	// I considered reusing the existing slice if all a client does
+	// is re-initialize the queue. The problem is that the current
+	// queue might be huge, but the next one might not grow much. So
+	// we'd hold on to a huge chunk of memory for just a few elements
+	// and nobody can do anything. Making a new slice and letting the
+	// GC take care of the old one seems like a better tradeoff.
 	q.front, q.back, q.length = 0, 0, 0
 	return q
 }
@@ -81,8 +76,9 @@ func (q *Queue) full() bool {
 func (q *Queue) grow() {
 	bigger := make([]interface{}, q.length*2)
 	// Kudos to Rodrigo Moraes, see https://gist.github.com/moraes/2141121
-	copy(bigger, q.rep[q.front:])
-	copy(bigger[q.length-q.front:], q.rep[:q.front])
+	// Kudos to Dariusz Górecki, see https://github.com/eapache/queue/commit/334cc1b02398be651373851653017e6cbf588f9e
+	n := copy(bigger, q.rep[q.front:])
+	copy(bigger[n:], q.rep[:q.front])
 	// The above replaced the "obvious" for loop and is a bit tricky.
 	// First note that q.front == q.back if we're full; if that wasn't
 	// true, things would be more complicated. Second recall that for
@@ -122,13 +118,13 @@ func (q *Queue) String() string {
 // inc returns the next integer position wrapping around queue q.
 func (q *Queue) inc(i int) int {
 	l := len(q.rep)
-	return (i + 1 + l) % l
+	return (i + 1) & (l - 1) // requires l = 2^n
 }
 
 // dec returns the previous integer position wrapping around queue q.
 func (q *Queue) dec(i int) int {
 	l := len(q.rep)
-	return (i - 1 + l) % l
+	return (i - 1) & (l - 1) // requires l = 2^n
 }
 
 // Front returns the first element of queue q or nil.
