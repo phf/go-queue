@@ -3,57 +3,70 @@
 [![GoDoc](https://godoc.org/github.com/phf/go-queue/queue?status.png)](http://godoc.org/github.com/phf/go-queue/queue)
 [![Go Report Card](https://goreportcard.com/badge/github.com/phf/go-queue)](https://goreportcard.com/report/github.com/phf/go-queue)
 
+A double-ended queue (aka "deque") built on top of a slice.
+All operations except pushes are constant-time; pushes are
+*amortized* constant-time.
+Benchmarks compare favorably to
+[container/list](https://golang.org/pkg/container/list/) as
+well as channels (see below).
+
+I tried to stick close to the conventions
+[container/list](https://golang.org/pkg/container/list/) seems to
+follow even though I disagree with several of them (see
+[`RANT.md`](https://github.com/phf/go-queue/blob/master/RANT.md)).
+In other words, it's ready for the standard library (hah!).
+
 ## Background
 
-I was hacking a breadth-first search in Go and needed a queue but
-all I could find in the standard library was
+In 2013 I was hacking a breadth-first search in Go and needed a
+queue, but all I could find in the standard library was
 [container/list](https://golang.org/pkg/container/list/).
 
-Now in principle there's nothing wrong with container/list, but I
-had just admonished my students to always carefully think about
+Now in *principle* there's nothing wrong with
+[container/list](https://golang.org/pkg/container/list/), but I
+had just admonished my students to *always* think carefully about
 the number of memory allocations their programs make.
-In other words, it felt a bit wrong for me to use a data structure
-that will allocate memory for every single vertex we visit during
-a breadth-first search.
+In other words, it felt wrong for me to use a data structure that
+will allocate memory for *every* single vertex we visit during a
+breadth-first search.
 
-So I quickly hacked a simple queue on top of a slice and finished
-my project.
-Now I am trying to clean up the code I wrote to give everybody else
-what I really wanted the standard library to have:
+After I got done with my project, I decided to clean up the queue
+code a little and to push it here to give everybody else what I
+really wanted to find in the standard library:
 A queue abstraction that doesn't allocate memory on every single
 insertion.
 
-I am trying to stick close to the conventions container/list seems
-to follow even though I disagree with several of them (see below).
-
 ## Performance comparison
 
-The benchmarks are not very sophisticated yet but we seem to beat
-container/list by 15%-45% or so.
-We now even beat Go's channels by about 5%, but I am still a bit
-suspicious of that.
-Anyway, here are the numbers:
+The benchmarks are not very sophisticated but we seem to be *almost*
+twice as fast as [container/list](https://golang.org/pkg/container/list/)
+([speedup](https://en.wikipedia.org/wiki/Speedup) of 1.85-1.93).
+We're also a bit faster than Go's channels (speedup of 1.38).
+Anyway, here are the (latest) numbers:
 
 ```
 $ go test -bench . -benchmem
-BenchmarkPushFrontQueue-2    	   10000	    109021 ns/op	   40736 B/op	    1010 allocs/op
-BenchmarkPushFrontList-2     	   10000	    154218 ns/op	   56048 B/op	    2001 allocs/op
-BenchmarkPushBackQueue-2     	   10000	    107951 ns/op	   40736 B/op	    1010 allocs/op
-BenchmarkPushBackList-2      	   10000	    158219 ns/op	   56048 B/op	    2001 allocs/op
-BenchmarkPushBackChannel-2   	   10000	    113839 ns/op	   24480 B/op	    1002 allocs/op
-BenchmarkRandomQueue-2       	    2000	    600828 ns/op	   45530 B/op	    1610 allocs/op
-BenchmarkRandomList-2        	    2000	    692993 ns/op	   89667 B/op	    3201 allocs/op
+BenchmarkPushFrontQueue-2    	   20000	     85886 ns/op	   40944 B/op	    1035 allocs/op
+BenchmarkPushFrontList-2     	   10000	    158998 ns/op	   57392 B/op	    2049 allocs/op
+BenchmarkPushBackQueue-2     	   20000	     85189 ns/op	   40944 B/op	    1035 allocs/op
+BenchmarkPushBackList-2      	   10000	    160718 ns/op	   57392 B/op	    2049 allocs/op
+BenchmarkPushBackChannel-2   	   10000	    117610 ns/op	   24672 B/op	    1026 allocs/op
+BenchmarkRandomQueue-2       	   10000	    144867 ns/op	   45720 B/op	    1632 allocs/op
+BenchmarkRandomList-2        	    5000	    278965 ns/op	   90824 B/op	    3243 allocs/op
 PASS
-ok  	github.com/phf/go-queue/queue	9.241s
+ok  	github.com/phf/go-queue/queue	12.472s
+$ go version
+go version go1.7.5 linux/amd64
+$ uname -p
+AMD Athlon(tm) 64 X2 Dual Core Processor 6000+
+$ date
+Sat Apr 22 11:26:40 EDT 2017
 ```
 
 ### Go's channels as queues
 
 Go's channels *used* to beat our queue implementation by about 22%
 for `PushBack`.
-(In fact I used to call them "*ridiculously* fast" before and
-recommended their use in situations where nothing but performance
-matters.)
 That seemed sensible considering that channels are built into the
 language and offer a lot less functionality:
 We have to size them correctly if we want to use them as a simple
@@ -63,48 +76,28 @@ without removing it.
 Apparently replacing the "manual" loop when a queue has to grow with
 [copy](https://golang.org/ref/spec#Appending_and_copying_slices) has
 paid off.
-(That or I am benchmarking this incorrectly.)
 
-## What I don't like about Go's conventions
-
-I guess my biggest gripe with Go's container/list is that it tries
-very hard to *never* **ever** panic.
-I don't understand this, and in fact I think it's rather dangerous.
-
-Take a plain old array for example.
-When you index outside of its domain, you get a panic even in Go.
-As you should!
-This kind of runtime check helps you catch your indexing errors and
-it also enforces the abstraction provided by the array.
-
-But then Go already messes things up with the builtin map type.
-Instead of getting a panic when you try to access a key that's not
-in the map, you get a zero value.
-And if you *really* want to know whether a key is there or not you
-have to go through some extra stunts.
-
-Apparently they just kept going from there with the libraries.
-In the case of container/list for example, if you try to remove
-an element that's *not* *actually* *from* *that* *list*, nothing
-happens.
-Instead of immediately getting into your face with a panic and
-helping you fix your code, you'll just keep wondering why the
-Remove() operation you wrote down didn't work.
-Indeed you'll probably end up looking for the bug in all the wrong
-places before it finally dawns on you that maybe you removed from
-the wrong list.
-
-In any case, presumably the Go folks know better what they want their
-libraries to look like than I do, so for this queue module I simply
-followed their conventions.
-I would much prefer to panic in your face when you try to remove or
-even just access something from an empty queue.
-But since their stuff doesn't panic in similar circumstances, this
-queue implementation doesn't either.
+(In fact I used to call channels "*ridiculously* fast" before and
+recommended their use in situations where nothing but performance
+matters. Alas that may no longer be good advice. Either that, or I
+am just benchmarking incorrectly.)
 
 ## Kudos
+
+Hacking queue data structures in Go seems to be a popular way to spend
+an evening. Kudos to...
 
 - [Rodrigo Moraes](https://github.com/moraes) for posting
   [this gist](https://gist.github.com/moraes/2141121) which reminded
   me of Go's [copy](https://golang.org/ref/spec#Appending_and_copying_slices)
   builtin and a similar trick I had previously used in Java.
+- [Evan Huus](https://github.com/eapache) for sharing
+  [his queue](https://github.com/eapache/queue) which reminded me of
+  the old "replace % by &" trick I had used many times before.
+- [Dariusz Górecki](https://github.com/canni) for his
+  [commit](https://github.com/eapache/queue/commit/334cc1b02398be651373851653017e6cbf588f9e)
+  to [Evan](https://github.com/eapache)'s queue that simplified
+  [Rodrigo](https://github.com/moraes)'s snippet and hence mine.
+
+If you find something in my code that helps you improve yours, feel
+free to run with it!
