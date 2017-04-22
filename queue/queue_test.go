@@ -1,12 +1,8 @@
-// Copyright (c) 2013, Peter H. Froehlich. All rights reserved.
+// Copyright (c) 2013-2017, Peter H. Froehlich. All rights reserved.
 // Use of this source code is governed by a BSD-style license
 // that can be found in the LICENSE file.
 
 package queue
-
-// TODO: need a lot more tests, and maybe a better way of
-// modularizing them; also benchmarks comparing this to
-// Go's container.list
 
 import "testing"
 import "container/list"
@@ -117,7 +113,7 @@ func TestZeroValue(t *testing.T) {
 	}
 }
 
-const size = 1000
+const size = 1024
 
 func BenchmarkPushFrontQueue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
