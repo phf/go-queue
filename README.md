@@ -8,7 +8,7 @@ All operations except pushes are constant-time; pushes are
 *amortized* constant-time.
 Benchmarks compare favorably to
 [container/list](https://golang.org/pkg/container/list/) as
-well as channels (see below).
+well as to Go's channels.
 
 I tried to stick close to the conventions
 [container/list](https://golang.org/pkg/container/list/) seems to
@@ -27,7 +27,7 @@ Now in *principle* there's nothing wrong with
 had just admonished my students to *always* think carefully about
 the number of memory allocations their programs make.
 In other words, it felt wrong for me to use a data structure that
-will allocate memory for *every* single vertex we visit during a
+allocates memory for *every* single vertex we visit during a
 breadth-first search.
 
 After I got done with my project, I decided to clean up the queue
@@ -36,13 +36,13 @@ really wanted to find in the standard library:
 A queue abstraction that doesn't allocate memory on every single
 insertion.
 
-## Performance comparison
+## Performance
 
 The benchmarks are not very sophisticated but we seem to be *almost*
 twice as fast as [container/list](https://golang.org/pkg/container/list/)
 ([speedup](https://en.wikipedia.org/wiki/Speedup) of 1.85-1.93).
 We're also a bit faster than Go's channels (speedup of 1.38).
-Anyway, here are the (latest) numbers:
+Anyway, here are some numbers from my old home machine:
 
 ```
 $ go test -bench . -benchmem
@@ -65,7 +65,30 @@ Sat Apr 22 11:26:40 EDT 2017
 
 (The number of allocations seems off, since we grow by doubling we should
 only allocate memory O(log n) times.)
+The same benchmarks on a more recent laptop:
 
+```
+$ go test -bench=. -benchmem
+PASS
+BenchmarkPushFrontQueue-4 	   10000	    107377 ns/op	   40944 B/op	    1035 allocs/op
+BenchmarkPushFrontList-4  	   10000	    205141 ns/op	   57392 B/op	    2049 allocs/op
+BenchmarkPushBackQueue-4  	   10000	    107339 ns/op	   40944 B/op	    1035 allocs/op
+BenchmarkPushBackList-4   	   10000	    204100 ns/op	   57392 B/op	    2049 allocs/op
+BenchmarkPushBackChannel-4	   10000	    174319 ns/op	   24672 B/op	    1026 allocs/op
+BenchmarkRandomQueue-4    	   10000	    190498 ns/op	   45720 B/op	    1632 allocs/op
+BenchmarkRandomList-4     	    5000	    364802 ns/op	   90825 B/op	    3243 allocs/op
+ok  	github.com/phf/go-queue/queue	11.881s
+$ go version
+go version go1.6.2 linux/amd64
+$ cat /proc/cpuinfo | grep "model name" | uniq
+model name	: AMD A10-4600M APU with Radeon(tm) HD Graphics
+$ date
+Fri Apr 28 17:20:57 EDT 2017
+```
+
+So that's a [speedup](https://en.wikipedia.org/wiki/Speedup) of 1.90 over
+[container/list](https://golang.org/pkg/container/list/) and of 1.62 over
+Go's channels.
 The same benchmarks on an old
 [Raspberry Pi Model B Rev 1](https://en.wikipedia.org/wiki/Raspberry_Pi):
 
@@ -82,18 +105,18 @@ BenchmarkRandomList          500           4929491 ns/op           53437 B/op   
 ok      github.com/phf/go-queue/queue   17.798s
 $ go version
 go version go1.3.3 linux/arm
-$ cat /proc/cpuinfo | grep model
+$ cat /proc/cpuinfo | grep "model name"
 model name      : ARMv6-compatible processor rev 7 (v6l)
 $ date
 Sat Apr 22 18:04:16 UTC 2017
 ```
 
-Here we're over three times faster than
-[container/list](https://golang.org/pkg/container/list/)
-and almost 60% faster than Go's channels.
-(Also the number of allocations seems to be correct. And in terms of
-raw performance, Go's memory allocator seems to have improved quite
-a bit in later versions.)
+So that's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
+**3.34**-**3.72** over
+[container/list](https://golang.org/pkg/container/list/) and of 1.58 over
+Go's channels.
+(Also the number of allocations seems to be correct here for some
+reason?)
 
 ### Go's channels as queues
 
@@ -105,14 +128,22 @@ We have to size them correctly if we want to use them as a simple
 queue in an otherwise non-concurrent setting, they are not
 double-ended, and they don't support "peeking" at the next element
 without removing it.
-Apparently replacing the "manual" loop when a queue has to grow with
-[copy](https://golang.org/ref/spec#Appending_and_copying_slices) has
-paid off.
 
-(In fact I used to call channels "*ridiculously* fast" before and
-recommended their use in situations where nothing but performance
-matters. Alas that may no longer be good advice. Either that, or I
-am just benchmarking incorrectly.)
+It all changed with
+[two](https://github.com/phf/go-queue/commit/5652cbe39198516d853918fe64a4e70948b42f1a)
+[commits](https://github.com/phf/go-queue/commit/aa6086b89f98eb5cfd8df918e57612271ae1c137)
+that replaced the "manual" loop when a queue has to grow with
+[copy](https://golang.org/ref/spec#Appending_and_copying_slices)
+and the `%` operations to wrap indices around the slice with
+equivalent `&` operations.
+(The code was originally written without these "hacks" because I wanted to
+show it to my "innocent" Java students.)
+Those two changes *really* paid off.
+
+(I used to call channels "*ridiculously* fast" before and recommended their
+use in situations where nothing but performance matters.
+Alas that may no longer be good advice.
+Either that, or I am just benchmarking incorrectly.)
 
 ## Kudos
 
