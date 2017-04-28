@@ -10,10 +10,11 @@ Benchmarks compare favorably to
 [container/list](https://golang.org/pkg/container/list/) as
 well as to Go's channels.
 
-I tried to stick close to the conventions
+I tried to stick to the conventions
 [container/list](https://golang.org/pkg/container/list/) seems to
-follow even though I disagree with several of them (see
-[`RANT.md`](https://github.com/phf/go-queue/blob/master/RANT.md)).
+follow even though I disagree with them (see
+[`RANT.md`](https://github.com/phf/go-queue/blob/master/RANT.md)
+for details).
 In other words, it's ready for the standard library (hah!).
 
 ## Background
@@ -42,7 +43,7 @@ The benchmarks are not very sophisticated but we seem to be *almost*
 twice as fast as [container/list](https://golang.org/pkg/container/list/)
 ([speedup](https://en.wikipedia.org/wiki/Speedup) of 1.85-1.93).
 We're also a bit faster than Go's channels (speedup of 1.38).
-Anyway, here are some numbers from my old home machine:
+Here are the numbers from my (ancient) home machine:
 
 ```
 $ go test -bench . -benchmem
@@ -63,9 +64,9 @@ $ date
 Sat Apr 22 11:26:40 EDT 2017
 ```
 
-(The number of allocations seems off, since we grow by doubling we should
-only allocate memory O(log n) times.)
-The same benchmarks on a more recent laptop:
+(Note that the number of allocations seems off: since we grow by doubling
+we should only allocate memory O(log n) times.)
+The same benchmarks on my (slightly more recent) laptop:
 
 ```
 $ go test -bench=. -benchmem
@@ -115,8 +116,8 @@ So that's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
 **3.34**-**3.72** over
 [container/list](https://golang.org/pkg/container/list/) and of 1.58 over
 Go's channels.
-(Also the number of allocations seems to be correct here for some
-reason?)
+(Also the number of allocations seems to be correct here, maybe the memory
+allocator in older versions of Go was more sane if less performant?)
 
 ### Go's channels as queues
 
@@ -129,10 +130,10 @@ queue in an otherwise non-concurrent setting, they are not
 double-ended, and they don't support "peeking" at the next element
 without removing it.
 
-It all changed with
+That all changed with
 [two](https://github.com/phf/go-queue/commit/5652cbe39198516d853918fe64a4e70948b42f1a)
 [commits](https://github.com/phf/go-queue/commit/aa6086b89f98eb5cfd8df918e57612271ae1c137)
-that replaced the "manual" loop when a queue has to grow with
+in which I replaced the "manual" loop when a queue has to grow with
 [copy](https://golang.org/ref/spec#Appending_and_copying_slices)
 and the `%` operations to wrap indices around the slice with
 equivalent `&` operations.
