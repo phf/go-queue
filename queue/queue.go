@@ -11,7 +11,10 @@
 // We are also faster than Go's channels by a smaller margin.
 package queue
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Queue represents a double-ended queue.
 // The zero value for Queue is an empty queue ready to use.
@@ -100,31 +103,28 @@ func (q *Queue) lazyGrow() {
 // String returns a string representation of queue q formatted
 // from front to back.
 func (q *Queue) String() string {
-	result := ""
-	result = result + "["
+	var result bytes.Buffer
+	result.WriteString("[")
 	j := q.front
 	for i := 0; i < q.length; i++ {
-		if i == q.length-1 {
-			result = result + fmt.Sprintf("%v", q.rep[j])
-		} else {
-			result = result + fmt.Sprintf("%v, ", q.rep[j])
+		result.WriteString(fmt.Sprintf("%v", q.rep[j]))
+		if i < q.length-1 {
+			result.WriteRune(' ')
 		}
 		j = q.inc(j)
 	}
-	result = result + "]"
-	return result
+	result.WriteString("]")
+	return result.String()
 }
 
 // inc returns the next integer position wrapping around queue q.
 func (q *Queue) inc(i int) int {
-	l := len(q.rep)
-	return (i + 1) & (l - 1) // requires l = 2^n
+	return (i + 1) & (len(q.rep) - 1) // requires l = 2^n
 }
 
 // dec returns the previous integer position wrapping around queue q.
 func (q *Queue) dec(i int) int {
-	l := len(q.rep)
-	return (i - 1) & (l - 1) // requires l = 2^n
+	return (i - 1) & (len(q.rep) - 1) // requires l = 2^n
 }
 
 // Front returns the first element of queue q or nil.

@@ -107,7 +107,7 @@ func TestZeroValue(t *testing.T) {
 	ensureLength(t, &q, 8)
 	q.PushBack(9)
 	ensureLength(t, &q, 9)
-	const want = "[5, 4, 3, 2, 1, 6, 7, 8, 9]"
+	const want = "[5 4 3 2 1 6 7 8 9]"
 	if s := q.String(); s != want {
 		t.Errorf("q.String() = %s, want %s", s, want)
 	}
