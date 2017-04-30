@@ -200,8 +200,56 @@ The same benchmarks on an old
 [Raspberry Pi Model B Rev 1](https://en.wikipedia.org/wiki/Raspberry_Pi):
 
 ```
-TODO
+$ benchstat bench.txt
+name             time/op
+PushFrontQueue    788µs ±24%
+PushFrontList    2.74ms ±14%
+PushBackQueue    1.11ms ± 3%
+PushBackList     2.73ms ±14%
+PushBackChannel  1.25ms ± 3%
+RandomQueue      1.50ms ± 1%
+RandomList       4.92ms ± 6%
+GrowShrinkQueue  1.26ms ± 0%
+GrowShrinkList   2.88ms ± 2%
+
+name             alloc/op
+PushFrontQueue   16.5kB ± 0%
+PushFrontList    33.9kB ± 0%
+PushBackQueue    16.5kB ± 0%
+PushBackList     33.9kB ± 0%
+PushBackChannel  8.45kB ± 0%
+RandomQueue      16.5kB ± 0%
+RandomList       53.4kB ± 0%
+GrowShrinkQueue  24.6kB ± 0%
+GrowShrinkList   33.9kB ± 0%
+
+name             allocs/op
+PushFrontQueue     12.0 ± 0%
+PushFrontList     1.03k ± 0%
+PushBackQueue      12.0 ± 0%
+PushBackList      1.03k ± 0%
+PushBackChannel    1.00 ± 0%
+RandomQueue        12.0 ± 0%
+RandomList        1.63k ± 0%
+GrowShrinkQueue    20.0 ± 0%
+GrowShrinkList    1.03k ± 0%
+$ go version
+go version go1.3.3 linux/arm
+$ cat /proc/cpuinfo |grep "model name"
+model name	: ARMv6-compatible processor rev 7 (v6l)
 ```
+
+That's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
+**2.46-3.48**
+over [container/list](https://golang.org/pkg/container/list/)
+but only a speedup of
+1.13
+over Go's channels.
+(Note that I had to manually repeat the benchmarks and then run `benchtest`
+elsewhere since those features/tools are not available for Go 1.3;
+however, the number of allocations seems to be correct here for the first
+time, maybe there's some breakage in the more recent benchmarking
+framework?)
 
 ### Go's channels as queues
 
