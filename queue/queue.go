@@ -6,6 +6,7 @@
 // of a slice. All operations are (amortized) constant time.
 // Benchmarks compare favorably to container/list as well as to Go's
 // channels.
+// Not safe for concurrent use.
 package queue
 
 import (
@@ -18,8 +19,7 @@ import (
 type Queue struct {
 	// PushBack writes to rep[back] and then increments
 	// back; PushFront decrements front and then writes
-	// to rep[front]; len(rep) must be a power of two;
-	// gotta love those invariants.
+	// to rep[front]; len(rep) must be a power of two.
 	rep    []interface{}
 	front  int
 	back   int

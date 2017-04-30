@@ -8,6 +8,7 @@ All operations are (amortized) constant time.
 Benchmarks compare favorably to
 [container/list](https://golang.org/pkg/container/list/) as
 well as to Go's channels.
+Not safe for concurrent use.
 
 I tried to stick to the conventions established by
 [container/list](https://golang.org/pkg/container/list/)
@@ -297,3 +298,24 @@ an evening. Kudos to...
 
 If you find something in my code that helps you improve yours, feel
 free to run with it!
+
+## Why use this queue over...
+
+- Your own? Well, I spent a reasonable amount of time on this one, making
+  sure that it works well as a general-purpose queue data structure. But
+  go ahead, you can probably do better.
+- https://github.com/eapache/queue is not double-ended, panics unlike the
+  standard library, has a "strange" `get` that's not really a queue
+  operation
+- https://gist.github.com/moraes/2141121 is not double-ended, doesn't
+  shrink to free up memory, uses an "extra" `Node` type
+- https://github.com/ErikDubbelboer/ringqueue/ is not double-ended
+  seems to shrink too early if I am reading the code correctly, uses
+  `%` instead of `&` which (sadly) still seems to make a difference
+- https://github.com/Workiva/go-datastructures/tree/master/queue is full
+  of semi-arcane concurrency stuff that a simple data structure doesn't
+  need
+- https://github.com/oleiade/lane uses
+  [container/list](https://golang.org/pkg/container/list/) and thus has
+  the same performance problems, has a bunch of concurrency stuff that
+  a simple data structure doesn't need
