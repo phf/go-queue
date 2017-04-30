@@ -17,7 +17,7 @@ As you should!
 This kind of runtime check helps you catch your indexing errors and
 enforces the abstraction provided by the array (or slice).
 
-But then Go already "messes things up" with the builtin map type.
+But then Go already "messes things up" with the builtin map type:
 Instead of getting a panic when you try to access a key that's not
 in the map, you get a zero value.
 And if you *really* want to know whether a key is there or not you

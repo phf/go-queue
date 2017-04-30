@@ -38,11 +38,11 @@ RandomList-2          3.24k ± 0%     3.24k ± 0%     ~     (all equal)
 ```
 
 The *only* difference between `old time` and `new time` is that the
-latter benchmarks had two additional *test cases* in `queue_test.go`.
+latter had two additional *test cases* in `queue_test.go`.
 The presence of those test cases makes *all* benchmarks appear worse
 for some reason.
-If I comment them out and run the *exact* *same* benchmarks, everything
-is "back to normal" for some reason.
-For now I am reporting the worse results in the official `README` just
+If I comment them out and run the *exact* *same* benchmarks again,
+everything is "back to normal" as it were.
+For now I am reporting the *worse* results in the official `README` just
 to be conservative, but I believe something needs to be fixed on the Go
 side of things.

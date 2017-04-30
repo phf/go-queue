@@ -98,11 +98,103 @@ We also consistently allocate less memory in fewer allocations than
 (Note that the number of allocations seems off: since we grow by *doubling*
 we should only allocate memory *O(log n)* times.)
 
-The same benchmarks on my (slightly more recent) laptop:
+The same benchmarks on one of our department's servers:
 
 ```
-TODO
+$ go test -bench=. -benchmem -count=10 >bench.txt
+$ benchstat bench.txt
+name               time/op
+PushFrontQueue-8   88.8µs ± 3%
+PushFrontList-8     156µs ± 5%
+PushBackQueue-8    88.3µs ± 1%
+PushBackList-8      159µs ± 2%
+PushBackChannel-8   132µs ± 2%
+RandomQueue-8       156µs ± 7%
+RandomList-8        279µs ±10%
+GrowShrinkQueue-8   117µs ± 0%
+GrowShrinkList-8    164µs ± 4%
+
+name               alloc/op
+PushFrontQueue-8   40.9kB ± 0%
+PushFrontList-8    57.4kB ± 0%
+PushBackQueue-8    40.9kB ± 0%
+PushBackList-8     57.4kB ± 0%
+PushBackChannel-8  24.7kB ± 0%
+RandomQueue-8      45.7kB ± 0%
+RandomList-8       90.8kB ± 0%
+GrowShrinkQueue-8  57.2kB ± 0%
+GrowShrinkList-8   57.4kB ± 0%
+
+name               allocs/op
+PushFrontQueue-8    1.03k ± 0%
+PushFrontList-8     2.05k ± 0%
+PushBackQueue-8     1.03k ± 0%
+PushBackList-8      2.05k ± 0%
+PushBackChannel-8   1.03k ± 0%
+RandomQueue-8       1.63k ± 0%
+RandomList-8        3.24k ± 0%
+GrowShrinkQueue-8   1.04k ± 0%
+GrowShrinkList-8    2.05k ± 0%
+$ go version
+go version go1.7.5 linux/amd64
+$ cat /proc/cpuinfo | grep "model name" |uniq
+model name	: Intel(R) Xeon(R) CPU           E5440  @ 2.83GHz
 ```
+
+That's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
+1.76-1.80
+over [container/list](https://golang.org/pkg/container/list/) and a speedup of
+1.49
+over Go's channels.
+
+The same benchmarks on a *different* department server:
+
+```
+$ go test -bench=. -benchmem -count=10 >bench.txt
+$ benchstat bench.txt
+name                time/op
+PushFrontQueue-24   89.1µs ± 8%
+PushFrontList-24     176µs ± 8%
+PushBackQueue-24    86.8µs ± 5%
+PushBackList-24      178µs ± 6%
+PushBackChannel-24   151µs ±12%
+RandomQueue-24       180µs ±24%
+RandomList-24        334µs ± 7%
+GrowShrinkQueue-24   117µs ± 3%
+GrowShrinkList-24    187µs ± 6%
+
+name                alloc/op
+PushFrontQueue-24   40.9kB ± 0%
+PushFrontList-24    57.4kB ± 0%
+PushBackQueue-24    40.9kB ± 0%
+PushBackList-24     57.4kB ± 0%
+PushBackChannel-24  24.7kB ± 0%
+RandomQueue-24      45.7kB ± 0%
+RandomList-24       90.8kB ± 0%
+GrowShrinkQueue-24  57.2kB ± 0%
+GrowShrinkList-24   57.4kB ± 0%
+
+name                allocs/op
+PushFrontQueue-24    1.03k ± 0%
+PushFrontList-24     2.05k ± 0%
+PushBackQueue-24     1.03k ± 0%
+PushBackList-24      2.05k ± 0%
+PushBackChannel-24   1.03k ± 0%
+RandomQueue-24       1.63k ± 0%
+RandomList-24        3.24k ± 0%
+GrowShrinkQueue-24   1.04k ± 0%
+GrowShrinkList-24    2.05k ± 0%
+$ go version
+go version go1.7.4 linux/amd64
+$ cat /proc/cpuinfo | grep "model name" |uniq
+model name	: Intel(R) Xeon(R) CPU E5-2420 0 @ 1.90GHz
+```
+
+That's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
+1.86-**2.05**
+over [container/list](https://golang.org/pkg/container/list/) and a speedup of
+1.74
+over Go's channels.
 
 The same benchmarks on an old
 [Raspberry Pi Model B Rev 1](https://en.wikipedia.org/wiki/Raspberry_Pi):
