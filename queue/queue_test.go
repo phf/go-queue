@@ -113,6 +113,35 @@ func TestZeroValue(t *testing.T) {
 	}
 }
 
+func TestGrowShrink1(t *testing.T) {
+	var q Queue
+	for i := 0; i < size; i++ {
+		q.PushBack(i)
+		ensureLength(t, &q, i+1)
+	}
+	for i := 0; q.Len() > 0; i++ {
+		x := q.PopFront().(int)
+		if x != i {
+			t.Errorf("q.PopFront() = %d, want %d", x, i)
+		}
+		ensureLength(t, &q, size-i-1)
+	}
+}
+func TestGrowShrink2(t *testing.T) {
+	var q Queue
+	for i := 0; i < size; i++ {
+		q.PushFront(i)
+		ensureLength(t, &q, i+1)
+	}
+	for i := 0; q.Len() > 0; i++ {
+		x := q.PopBack().(int)
+		if x != i {
+			t.Errorf("q.PopBack() = %d, want %d", x, i)
+		}
+		ensureLength(t, &q, size-i-1)
+	}
+}
+
 const size = 1024
 
 func BenchmarkPushFrontQueue(b *testing.B) {
@@ -171,6 +200,7 @@ func makeRands() {
 }
 func BenchmarkRandomQueue(b *testing.B) {
 	makeRands()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var q Queue
 		for n := 0; n < size; n++ {
@@ -191,6 +221,7 @@ func BenchmarkRandomQueue(b *testing.B) {
 }
 func BenchmarkRandomList(b *testing.B) {
 	makeRands()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var q list.List
 		for n := 0; n < size; n++ {
@@ -209,6 +240,31 @@ func BenchmarkRandomList(b *testing.B) {
 				if e := q.Back(); e != nil {
 					q.Remove(e)
 				}
+			}
+		}
+	}
+}
+
+func BenchmarkGrowShrinkQueue(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var q Queue
+		for n := 0; n < size; n++ {
+			q.PushBack(i)
+		}
+		for n := 0; n < size; n++ {
+			q.PopFront()
+		}
+	}
+}
+func BenchmarkGrowShrinkList(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var q list.List
+		for n := 0; n < size; n++ {
+			q.PushBack(i)
+		}
+		for n := 0; n < size; n++ {
+			if e := q.Front(); e != nil {
+				q.Remove(e)
 			}
 		}
 	}

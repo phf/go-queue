@@ -4,18 +4,18 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/phf/go-queue)](https://goreportcard.com/report/github.com/phf/go-queue)
 
 A double-ended queue (aka "deque") built on top of a slice.
-All operations except pushes are constant-time; pushes are
-*amortized* constant-time.
+All operations are (amortized) constant time.
 Benchmarks compare favorably to
 [container/list](https://golang.org/pkg/container/list/) as
 well as to Go's channels.
 
-I tried to stick to the conventions
-[container/list](https://golang.org/pkg/container/list/) seems to
-follow even though I disagree with them (see
+I tried to stick to the conventions established by
+[container/list](https://golang.org/pkg/container/list/)
+even though I disagree with them (see
 [`RANT.md`](https://github.com/phf/go-queue/blob/master/RANT.md)
 for details).
-In other words, it's ready for the standard library (hah!).
+In other words, this data structure is ready for the standard
+library (hah!).
 
 ## Background
 
@@ -39,85 +39,77 @@ insertion.
 
 ## Performance
 
-The benchmarks are not very sophisticated but we seem to be *almost*
-twice as fast as [container/list](https://golang.org/pkg/container/list/)
-([speedup](https://en.wikipedia.org/wiki/Speedup) of 1.85-1.93).
-We're also a bit faster than Go's channels (speedup of 1.38).
-Here are the numbers from my (ancient) home machine:
+**Please read
+[`BENCH.md`](https://github.com/phf/go-queue/blob/master/BENCH.md)
+for some perspective.
+The numbers below are most likely "contaminated" in a way that makes
+our queues appear *worse* than they are.**
+
+Here are the numbers for my (ancient) home machine:
 
 ```
-$ go test -bench . -benchmem
-BenchmarkPushFrontQueue-2    	   20000	     85886 ns/op	   40944 B/op	    1035 allocs/op
-BenchmarkPushFrontList-2     	   10000	    158998 ns/op	   57392 B/op	    2049 allocs/op
-BenchmarkPushBackQueue-2     	   20000	     85189 ns/op	   40944 B/op	    1035 allocs/op
-BenchmarkPushBackList-2      	   10000	    160718 ns/op	   57392 B/op	    2049 allocs/op
-BenchmarkPushBackChannel-2   	   10000	    117610 ns/op	   24672 B/op	    1026 allocs/op
-BenchmarkRandomQueue-2       	   10000	    144867 ns/op	   45720 B/op	    1632 allocs/op
-BenchmarkRandomList-2        	    5000	    278965 ns/op	   90824 B/op	    3243 allocs/op
-PASS
-ok  	github.com/phf/go-queue/queue	12.472s
+$ go test -bench=. -benchmem -count=10 >bench.txt
+$ benchstat bench.txt
+name               time/op
+PushFrontQueue-2   97.7µs ± 1%
+PushFrontList-2     163µs ± 1%
+PushBackQueue-2    98.0µs ± 1%
+PushBackList-2      165µs ± 3%
+PushBackChannel-2   145µs ± 1%
+RandomQueue-2       172µs ± 1%
+RandomList-2        292µs ± 1%
+GrowShrinkQueue-2   121µs ± 1%
+GrowShrinkList-2    174µs ± 1%
+
+name               alloc/op
+PushFrontQueue-2   40.9kB ± 0%
+PushFrontList-2    57.4kB ± 0%
+PushBackQueue-2    40.9kB ± 0%
+PushBackList-2     57.4kB ± 0%
+PushBackChannel-2  24.7kB ± 0%
+RandomQueue-2      45.7kB ± 0%
+RandomList-2       90.8kB ± 0%
+GrowShrinkQueue-2  57.2kB ± 0%
+GrowShrinkList-2   57.4kB ± 0%
+
+name               allocs/op
+PushFrontQueue-2    1.03k ± 0%
+PushFrontList-2     2.05k ± 0%
+PushBackQueue-2     1.03k ± 0%
+PushBackList-2      2.05k ± 0%
+PushBackChannel-2   1.03k ± 0%
+RandomQueue-2       1.63k ± 0%
+RandomList-2        3.24k ± 0%
+GrowShrinkQueue-2   1.04k ± 0%
+GrowShrinkList-2    2.05k ± 0%
 $ go version
 go version go1.7.5 linux/amd64
-$ uname -p
-AMD Athlon(tm) 64 X2 Dual Core Processor 6000+
-$ date
-Sat Apr 22 11:26:40 EDT 2017
+$ cat /proc/cpuinfo | grep "model name" | uniq
+model name	: AMD Athlon(tm) 64 X2 Dual Core Processor 6000+
 ```
 
-(Note that the number of allocations seems off: since we grow by doubling
-we should only allocate memory O(log n) times.)
+That's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
+1.45-1.70
+over [container/list](https://golang.org/pkg/container/list/) and a speedup of
+1.48
+over Go's channels.
+We also consistently allocate less memory in fewer allocations than
+[container/list](https://golang.org/pkg/container/list/).
+(Note that the number of allocations seems off: since we grow by *doubling*
+we should only allocate memory *O(log n)* times.)
+
 The same benchmarks on my (slightly more recent) laptop:
 
 ```
-$ go test -bench=. -benchmem
-PASS
-BenchmarkPushFrontQueue-4 	   10000	    107377 ns/op	   40944 B/op	    1035 allocs/op
-BenchmarkPushFrontList-4  	   10000	    205141 ns/op	   57392 B/op	    2049 allocs/op
-BenchmarkPushBackQueue-4  	   10000	    107339 ns/op	   40944 B/op	    1035 allocs/op
-BenchmarkPushBackList-4   	   10000	    204100 ns/op	   57392 B/op	    2049 allocs/op
-BenchmarkPushBackChannel-4	   10000	    174319 ns/op	   24672 B/op	    1026 allocs/op
-BenchmarkRandomQueue-4    	   10000	    190498 ns/op	   45720 B/op	    1632 allocs/op
-BenchmarkRandomList-4     	    5000	    364802 ns/op	   90825 B/op	    3243 allocs/op
-ok  	github.com/phf/go-queue/queue	11.881s
-$ go version
-go version go1.6.2 linux/amd64
-$ cat /proc/cpuinfo | grep "model name" | uniq
-model name	: AMD A10-4600M APU with Radeon(tm) HD Graphics
-$ date
-Fri Apr 28 17:20:57 EDT 2017
+TODO
 ```
 
-So that's a [speedup](https://en.wikipedia.org/wiki/Speedup) of 1.90 over
-[container/list](https://golang.org/pkg/container/list/) and of 1.62 over
-Go's channels.
 The same benchmarks on an old
 [Raspberry Pi Model B Rev 1](https://en.wikipedia.org/wiki/Raspberry_Pi):
 
 ```
-$ go test -bench . -benchmem
-PASS
-BenchmarkPushFrontQueue     2000            788316 ns/op           16469 B/op         12 allocs/op
-BenchmarkPushFrontList      1000           2629835 ns/op           33904 B/op       1028 allocs/op
-BenchmarkPushBackQueue      2000            776663 ns/op           16469 B/op         12 allocs/op
-BenchmarkPushBackList       1000           2817162 ns/op           33877 B/op       1028 allocs/op
-BenchmarkPushBackChannel    2000           1229474 ns/op            8454 B/op          1 allocs/op
-BenchmarkRandomQueue        2000           1325947 ns/op           16469 B/op         12 allocs/op
-BenchmarkRandomList          500           4929491 ns/op           53437 B/op       1627 allocs/op
-ok      github.com/phf/go-queue/queue   17.798s
-$ go version
-go version go1.3.3 linux/arm
-$ cat /proc/cpuinfo | grep "model name"
-model name      : ARMv6-compatible processor rev 7 (v6l)
-$ date
-Sat Apr 22 18:04:16 UTC 2017
+TODO
 ```
-
-So that's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
-**3.34**-**3.72** over
-[container/list](https://golang.org/pkg/container/list/) and of 1.58 over
-Go's channels.
-(Also the number of allocations seems to be correct here, maybe the memory
-allocator in older versions of Go was more sane if less performant?)
 
 ### Go's channels as queues
 

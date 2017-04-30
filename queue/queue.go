@@ -2,13 +2,10 @@
 // Use of this source code is governed by a BSD-style license
 // that can be found in the LICENSE file.
 
-// Package queue implements a double-ended queue abstraction on
-// top of a slice/array. All operations are constant time except
-// for PushFront and PushBack which are amortized constant time.
-//
-// We are almost twice as fast as container/list at the price of
-// potentially wasting some memory because we grow by doubling.
-// We are also faster than Go's channels by a smaller margin.
+// Package queue implements a double-ended queue (aka "deque") on top
+// of a slice. All operations are (amortized) constant time.
+// Benchmarks compare favorably to container/list as well as to Go's
+// channels.
 package queue
 
 import (
@@ -52,8 +49,7 @@ func (q *Queue) Init() *Queue {
 // I am mostly doing this because container/list does the same thing.
 // Personally I think it's a little wasteful because every single
 // PushFront/PushBack is going to pay the overhead of calling this.
-// But that's the price for making zero values useful immediately,
-// something Go folks apparently like a lot.
+// But that's the price for making zero values useful immediately.
 func (q *Queue) lazyInit() {
 	if q.rep == nil {
 		q.Init()
@@ -75,13 +71,18 @@ func (q *Queue) full() bool {
 	return q.length == len(q.rep)
 }
 
-// grow doubles the size of queue q's underlying slice/array.
+// sparse returns true if the queue q has excess capacity.
+func (q *Queue) sparse() bool {
+	return 1 < q.length && q.length < len(q.rep)/4
+}
+
+// grow doubles the size of queue q's underlying slice.
 func (q *Queue) grow() {
-	bigger := make([]interface{}, q.length*2)
+	bigger := make([]interface{}, len(q.rep)*2)
 	// Kudos to Rodrigo Moraes, see https://gist.github.com/moraes/2141121
 	// Kudos to Dariusz Górecki, see https://github.com/eapache/queue/commit/334cc1b02398be651373851653017e6cbf588f9e
 	n := copy(bigger, q.rep[q.front:])
-	copy(bigger[n:], q.rep[:q.front])
+	copy(bigger[n:], q.rep[:q.back])
 	// The above replaced the "obvious" for loop and is a bit tricky.
 	// First note that q.front == q.back if we're full; if that wasn't
 	// true, things would be more complicated. Second recall that for
@@ -93,10 +94,31 @@ func (q *Queue) grow() {
 	q.back = q.length
 }
 
-// lazyGrow grows the underlying slice/array if necessary.
+// lazyGrow grows the underlying slice if necessary.
 func (q *Queue) lazyGrow() {
 	if q.full() {
 		q.grow()
+	}
+}
+
+// shrink halves the size of queue q's underlying slice.
+func (q *Queue) shrink() {
+	smaller := make([]interface{}, len(q.rep)/2)
+	if q.front < q.back {
+		copy(smaller, q.rep[q.front:q.back])
+	} else {
+		n := copy(smaller, q.rep[q.front:])
+		copy(smaller[n:], q.rep[:q.back])
+	}
+	q.rep = smaller
+	q.front = 0
+	q.back = q.length
+}
+
+// lazyShrink shrinks the underlying slice if advisable.
+func (q *Queue) lazyShrink() {
+	if q.sparse() {
+		q.shrink()
 	}
 }
 
@@ -161,18 +183,16 @@ func (q *Queue) PushBack(v interface{}) {
 	q.length++
 }
 
-// Both PopFront and PopBack set the newly free slot to nil
-// in an attempt to be nice to the garbage collector.
-
 // PopFront removes and returns the first element of queue q or nil.
 func (q *Queue) PopFront() interface{} {
 	if q.empty() {
 		return nil
 	}
 	v := q.rep[q.front]
-	q.rep[q.front] = nil
+	q.rep[q.front] = nil // be nice to GC
 	q.front = q.inc(q.front)
 	q.length--
+	q.lazyShrink()
 	return v
 }
 
@@ -183,7 +203,8 @@ func (q *Queue) PopBack() interface{} {
 	}
 	q.back = q.dec(q.back)
 	v := q.rep[q.back]
-	q.rep[q.back] = nil
+	q.rep[q.back] = nil // be nice to GC
 	q.length--
+	q.lazyShrink()
 	return v
 }
