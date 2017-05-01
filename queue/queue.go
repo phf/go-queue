@@ -89,14 +89,14 @@ func (q *Queue) resize(size int) {
 // lazyGrow grows the underlying slice if necessary.
 func (q *Queue) lazyGrow() {
 	if q.full() {
-		q.resize(len(q.rep)*2)
+		q.resize(len(q.rep) * 2)
 	}
 }
 
 // lazyShrink shrinks the underlying slice if advisable.
 func (q *Queue) lazyShrink() {
 	if q.sparse() {
-		q.resize(len(q.rep)/2)
+		q.resize(len(q.rep) / 2)
 	}
 }
 
