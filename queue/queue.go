@@ -34,12 +34,6 @@ func New() *Queue {
 // Init initializes or clears queue q.
 func (q *Queue) Init() *Queue {
 	q.rep = make([]interface{}, 1)
-	// I considered reusing the existing slice if all a client does
-	// is re-initialize the queue. The problem is that the current
-	// queue might be huge, but the next one might not grow much. So
-	// we'd hold on to a huge chunk of memory for just a few elements
-	// and nobody can do anything. Making a new slice and letting the
-	// GC take care of the old one seems like a better tradeoff.
 	q.front, q.back, q.length = 0, 0, 0
 	return q
 }
@@ -76,20 +70,18 @@ func (q *Queue) sparse() bool {
 	return 1 < q.length && q.length < len(q.rep)/4
 }
 
-// grow doubles the size of queue q's underlying slice.
-func (q *Queue) grow() {
-	bigger := make([]interface{}, len(q.rep)*2)
-	// Kudos to Rodrigo Moraes, see https://gist.github.com/moraes/2141121
-	// Kudos to Dariusz Górecki, see https://github.com/eapache/queue/commit/334cc1b02398be651373851653017e6cbf588f9e
-	n := copy(bigger, q.rep[q.front:])
-	copy(bigger[n:], q.rep[:q.back])
-	// The above replaced the "obvious" for loop and is a bit tricky.
-	// First note that q.front == q.back if we're full; if that wasn't
-	// true, things would be more complicated. Second recall that for
-	// a slice [lo:hi] the lo bound is inclusive whereas the hi bound
-	// is exclusive. If that doesn't convince you that the above works
-	// maybe drawing out some pictures for a concrete example will?
-	q.rep = bigger
+// resize adjusts the size of queue q's underlying slice.
+func (q *Queue) resize(size int) {
+	adjusted := make([]interface{}, size)
+	if q.front < q.back {
+		// rep not "wrapped" around, one copy suffices
+		copy(adjusted, q.rep[q.front:q.back])
+	} else {
+		// rep is "wrapped" around, need two copies
+		n := copy(adjusted, q.rep[q.front:])
+		copy(adjusted[n:], q.rep[:q.back])
+	}
+	q.rep = adjusted
 	q.front = 0
 	q.back = q.length
 }
@@ -97,28 +89,14 @@ func (q *Queue) grow() {
 // lazyGrow grows the underlying slice if necessary.
 func (q *Queue) lazyGrow() {
 	if q.full() {
-		q.grow()
+		q.resize(len(q.rep)*2)
 	}
-}
-
-// shrink halves the size of queue q's underlying slice.
-func (q *Queue) shrink() {
-	smaller := make([]interface{}, len(q.rep)/2)
-	if q.front < q.back {
-		copy(smaller, q.rep[q.front:q.back])
-	} else {
-		n := copy(smaller, q.rep[q.front:])
-		copy(smaller[n:], q.rep[:q.back])
-	}
-	q.rep = smaller
-	q.front = 0
-	q.back = q.length
 }
 
 // lazyShrink shrinks the underlying slice if advisable.
 func (q *Queue) lazyShrink() {
 	if q.sparse() {
-		q.shrink()
+		q.resize(len(q.rep)/2)
 	}
 }
 
@@ -126,16 +104,16 @@ func (q *Queue) lazyShrink() {
 // from front to back.
 func (q *Queue) String() string {
 	var result bytes.Buffer
-	result.WriteString("[")
+	result.WriteByte('[')
 	j := q.front
 	for i := 0; i < q.length; i++ {
 		result.WriteString(fmt.Sprintf("%v", q.rep[j]))
 		if i < q.length-1 {
-			result.WriteRune(' ')
+			result.WriteByte(' ')
 		}
 		j = q.inc(j)
 	}
-	result.WriteString("]")
+	result.WriteByte(']')
 	return result.String()
 }
 
