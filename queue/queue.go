@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style license
 // that can be found in the LICENSE file.
 
-// Package queue implements a double-ended queue (aka "deque") on top
-// of a slice. All operations are (amortized) constant time.
-// Benchmarks compare favorably to container/list as well as to Go's
-// channels.
-// Not safe for concurrent use.
+// Package queue implements a double-ended queue (aka "deque") on top of a
+// slice. All operations are (amortized) constant time. Benchmarks compare
+// favorably to container/list as well as to Go's channels. Not safe for
+// concurrent use.
 package queue
 
 import (
@@ -15,11 +14,11 @@ import (
 )
 
 // Queue represents a double-ended queue.
-// The zero value for Queue is an empty queue ready to use.
+// The zero value is an empty queue ready to use.
 type Queue struct {
-	// PushBack writes to rep[back] and then increments
-	// back; PushFront decrements front and then writes
-	// to rep[front]; len(rep) must be a power of two.
+	// PushBack writes to rep[back] then increments back; PushFront
+	// decrements front then writes to rep[front]; len(rep) is a power
+	// of two; unused slots are nil and not garbage.
 	rep    []interface{}
 	front  int
 	back   int
@@ -129,17 +128,13 @@ func (q *Queue) dec(i int) int {
 
 // Front returns the first element of queue q or nil.
 func (q *Queue) Front() interface{} {
-	if q.empty() {
-		return nil
-	}
+	// no need to check q.empty(), unused slots are nil
 	return q.rep[q.front]
 }
 
 // Back returns the last element of queue q or nil.
 func (q *Queue) Back() interface{} {
-	if q.empty() {
-		return nil
-	}
+	// no need to check q.empty(), unused slots are nil
 	return q.rep[q.dec(q.back)]
 }
 
@@ -167,7 +162,7 @@ func (q *Queue) PopFront() interface{} {
 		return nil
 	}
 	v := q.rep[q.front]
-	q.rep[q.front] = nil // be nice to GC
+	q.rep[q.front] = nil // unused slots must be nil
 	q.front = q.inc(q.front)
 	q.length--
 	q.lazyShrink()
@@ -181,7 +176,7 @@ func (q *Queue) PopBack() interface{} {
 	}
 	q.back = q.dec(q.back)
 	v := q.rep[q.back]
-	q.rep[q.back] = nil // be nice to GC
+	q.rep[q.back] = nil // unused slots must be nil
 	q.length--
 	q.lazyShrink()
 	return v
