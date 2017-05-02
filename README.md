@@ -300,23 +300,62 @@ an evening. Kudos to...
 If you find something in my code that helps you improve yours, feel
 free to run with it!
 
-## Why use this queue over...
+## Why use this queue?
 
-- Your own? Well, I spent a reasonable amount of time on this one, making
-  sure that it works well as a general-purpose queue data structure. But
-  go ahead, you can probably do better.
-- https://github.com/eapache/queue is not double-ended, panics unlike the
-  standard library, has a "strange" `get` that's not really a queue
+Looking around at other people's queues shows some "common problems" that
+this implementation tries to avoid:
+
+- Most queues out there are just that, they are not double-ended.
+  Deques are more general but their implementation is *not* significantly
+  more complex. Why go for anything less as a general-purpose data structure?
+- Some queues panic. Personally I approve of this if it's done right
+  (see [`RANT.md`](https://github.com/phf/go-queue/blob/master/RANT.md)), but
+  *not* using panic is a better fit with the rest of the library/language.
+- Many queues use linked lists with one element per node, leading to the same
+  performance problems [container/list](https://golang.org/pkg/container/list/)
+  has.
+- Some queues offer "strange" operations that don't fit the queue/deque
+  abstraction. Call me a purist, but I prefer my interfaces complete yet
+  minimal.
+- Some queues are safe for concurrent use, but Go's philosophy seems to be to
+  leave this up to the programmer, not the library designer. The overhead of
+  locking doesn't "disappear" when you don't need it.
+- Some queues based on slices use `%` instead of `&` for wrapping indices.
+  That *shouldn't* matter for performance but in fact it still does (as of
+  Go 1.7.5 anyway).
+- Some queues based on slices never shrink. In specific applications that
+  may be fine, for a general-purpose data structure it's not.
+
+With that in mind, here's a list of queue/deque implementations that I
+wouldn't recommend:
+
+- https://github.com/eapache/queue not double-ended, panics, "strange" `Get`
   operation
-- https://gist.github.com/moraes/2141121 is not double-ended, doesn't
-  shrink to free up memory, uses an "extra" `Node` type
-- https://github.com/ErikDubbelboer/ringqueue/ is not double-ended
-  seems to shrink too early if I am reading the code correctly, uses
-  `%` instead of `&` which (sadly) still seems to make a difference
-- https://github.com/Workiva/go-datastructures/tree/master/queue is full
-  of semi-arcane concurrency stuff that a simple data structure doesn't
-  need
-- https://github.com/oleiade/lane uses
-  [container/list](https://golang.org/pkg/container/list/) and thus has
-  the same performance problems, has a bunch of concurrency stuff that
-  a simple data structure doesn't need
+- https://github.com/emnl/goods/tree/master/queue not double-ended, linked
+  list
+- https://github.com/oleiade/lane linked list, safe for concurrent use
+- https://github.com/Workiva/go-datastructures/tree/master/queue full
+  of semi-arcane concurrency stuff
+- https://github.com/pbberlin/tools/blob/master/util/util-fifo-queue.go not
+  double-ended, uses `%` instead of `&`, requires starting size not less
+  than 5???
+- https://gist.github.com/moraes/2141121 not double-ended, doesn't shrink,
+  extra `Node` type
+- https://github.com/ErikDubbelboer/ringqueue/ not double-ended, uses
+  `%` instead of `&`, seems to shrink too early (if I am reading the code
+  correctly)
+- https://github.com/iNamik/go_container/tree/master/queue not double-ended,
+  panics, "strange" `Peek` and `AtCapacity` operations, doesn't wrap around
+  in slice
+
+Of course you could always roll your own.
+I spent a reasonable amount of time on this one, making sure that it works
+well as a general-purpose queue/deque data structure.
+But go ahead, you can probably do better.
+
+## Where's the actual competition?
+
+- https://github.com/juju/utils/tree/master/deque uses a viable alternative
+  representation, a list of blocks; that should "waste" less memory in some
+  scenarios but the code is more complicated; sadly it doesn't have `Front`
+  or `Back` operations for some reason
