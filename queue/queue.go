@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license
 // that can be found in the LICENSE file.
 
-// Package queue implements a double-ended queue (aka "deque") on top of a
-// slice. All operations are (amortized) constant time. Benchmarks compare
-// favorably to container/list as well as to Go's channels. Not safe for
-// concurrent use.
+// Package queue implements a double-ended queue (aka "deque") data structure
+// on top of a slice. All operations run in (amortized) constant time.
+// Benchmarks compare favorably to container/list as well as to Go's channels.
+// These queues are not safe for concurrent use.
 package queue
 
 import (

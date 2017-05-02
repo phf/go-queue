@@ -3,12 +3,13 @@
 [![GoDoc](https://godoc.org/github.com/phf/go-queue/queue?status.png)](http://godoc.org/github.com/phf/go-queue/queue)
 [![Go Report Card](https://goreportcard.com/badge/github.com/phf/go-queue)](https://goreportcard.com/report/github.com/phf/go-queue)
 
-A double-ended queue (aka "deque") built on top of a slice.
-All operations are (amortized) constant time.
+Package `queue` implements a double-ended queue (aka "deque") data structure
+on top of a slice.
+All operations run in (amortized) constant time.
 Benchmarks compare favorably to
-[container/list](https://golang.org/pkg/container/list/) as
-well as to Go's channels.
-Not safe for concurrent use.
+[container/list](https://golang.org/pkg/container/list/) as well as to
+Go's channels.
+These queues are not safe for concurrent use.
 
 I tried to stick to the conventions established by
 [container/list](https://golang.org/pkg/container/list/)
