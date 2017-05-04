@@ -355,7 +355,8 @@ But go ahead, you can probably do better.
 
 ## Where's the actual competition?
 
-- https://github.com/juju/utils/tree/master/deque uses a viable alternative
-  representation, a list of blocks; that should "waste" less memory in some
-  scenarios but the code is more complicated; sadly it doesn't have `Front`
-  or `Back` operations for some reason
+- https://github.com/juju/utils/tree/master/deque seems pretty good. It uses
+  a viable alternative representation: a list of blocks. That should "waste"
+  less memory in some scenarios, but of course the code is more complicated
+  than ours. Sadly it doesn't have `Front` or `Back` operations, so the
+  interface isn't complete. But that would be an easy fix...
