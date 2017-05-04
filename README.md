@@ -44,7 +44,7 @@ insertion.
 **Please read
 [`BENCH.md`](https://github.com/phf/go-queue/blob/master/BENCH.md)
 for some perspective.
-The numbers below are most likely "contaminated" in a way that makes
+Some numbers below are most likely "contaminated" in a way that makes
 our queues appear *worse* than they are.**
 
 Here are the numbers for my (ancient) home machine:
@@ -53,15 +53,15 @@ Here are the numbers for my (ancient) home machine:
 $ go test -bench=. -benchmem -count=10 >bench.txt
 $ benchstat bench.txt
 name               time/op
-PushFrontQueue-2   97.7µs ± 1%
-PushFrontList-2     163µs ± 1%
-PushBackQueue-2    98.0µs ± 1%
-PushBackList-2      165µs ± 3%
-PushBackChannel-2   145µs ± 1%
-RandomQueue-2       172µs ± 1%
-RandomList-2        292µs ± 1%
-GrowShrinkQueue-2   121µs ± 1%
-GrowShrinkList-2    174µs ± 1%
+PushFrontQueue-2   82.8µs ± 1%
+PushFrontList-2     162µs ± 1%
+PushBackQueue-2    83.4µs ± 1%
+PushBackList-2      158µs ± 3%
+PushBackChannel-2   110µs ± 2%
+RandomQueue-2       161µs ± 2%
+RandomList-2        281µs ± 4%
+GrowShrinkQueue-2   110µs ± 1%
+GrowShrinkList-2    170µs ± 5%
 
 name               alloc/op
 PushFrontQueue-2   40.9kB ± 0%
@@ -85,15 +85,15 @@ RandomList-2        3.24k ± 0%
 GrowShrinkQueue-2   1.04k ± 0%
 GrowShrinkList-2    2.05k ± 0%
 $ go version
-go version go1.7.5 linux/amd64
+go version go1.8.1 linux/amd64
 $ cat /proc/cpuinfo | grep "model name" | uniq
 model name	: AMD Athlon(tm) 64 X2 Dual Core Processor 6000+
 ```
 
 That's a [speedup](https://en.wikipedia.org/wiki/Speedup) of
-1.45-1.70
+1.55-1.96
 over [container/list](https://golang.org/pkg/container/list/) and a speedup of
-1.48
+1.31
 over Go's channels.
 We also consistently allocate less memory in fewer allocations than
 [container/list](https://golang.org/pkg/container/list/).
