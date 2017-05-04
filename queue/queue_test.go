@@ -203,17 +203,17 @@ func BenchmarkRandomQueue(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var q Queue
-		for n := 0; n < size; n++ {
-			if rands[n*4] < 0.8 {
+		for n := 0; n < 4*size; n += 4 {
+			if rands[n] < 0.8 {
 				q.PushBack(n)
 			}
-			if rands[n*4+1] < 0.8 {
+			if rands[n+1] < 0.8 {
 				q.PushFront(n)
 			}
-			if rands[n*4+2] < 0.5 {
+			if rands[n+2] < 0.5 {
 				q.PopFront()
 			}
-			if rands[n*4+3] < 0.5 {
+			if rands[n+3] < 0.5 {
 				q.PopBack()
 			}
 		}
@@ -224,19 +224,19 @@ func BenchmarkRandomList(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var q list.List
-		for n := 0; n < size; n++ {
-			if rands[n*4] < 0.8 {
+		for n := 0; n < 4*size; n += 4 {
+			if rands[n] < 0.8 {
 				q.PushBack(n)
 			}
-			if rands[n*4+1] < 0.8 {
+			if rands[n+1] < 0.8 {
 				q.PushFront(n)
 			}
-			if rands[n*4+2] < 0.5 {
+			if rands[n+2] < 0.5 {
 				if e := q.Front(); e != nil {
 					q.Remove(e)
 				}
 			}
-			if rands[n*4+3] < 0.5 {
+			if rands[n+3] < 0.5 {
 				if e := q.Back(); e != nil {
 					q.Remove(e)
 				}
